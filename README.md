@@ -2,6 +2,5 @@
 
 # Flexible ANalytic Chemical Evolution
 
-FANC-E is an analytic one-zone chemical evolution code. It implements the Weinberg, Andrews, & Freudenburg (2017) analytic solution and
-also a solution with a rise-fall SFH: Mdotstar \propto (1-e^{-t/tau1})*e^{-t/tau2}.
+FANC-E is an analytic one-zone chemical evolution code. It implements the Weinberg, Andrews, & Freudenburg (2017) analytic solution for a constant, exponential declining, or linear-exponential (delayed tau) star formation history.
 
