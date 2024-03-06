@@ -1,5 +1,5 @@
 '''
-FANC-E default parameters
+fanCE default parameters
 These parameters describe the reference model in Gountanis et al. 2024
 All timescales are given in Gyr
 '''
