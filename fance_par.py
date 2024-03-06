@@ -6,6 +6,7 @@ All timescales are given in Gyr
 
 dtout=0.02              # output timestep
 tmax=14.0               # maximum time
+tStart=0.5              # star formation start time
 
 tauStar=1               # star formation efficiency timescale
 eta=0.3                 # outflow mass loading factor
