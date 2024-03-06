@@ -32,13 +32,13 @@ def waf(t,mocc,mmgcc,mfecc,mfeIa,r,SolarO,SolarMg,SolarFe,tauIa,tdmin,eta,tauSta
 
     Input arguments (illustrative values in [  ]):
       t = time array for desired outputs [0.0,0.02,0.04, ..., 12.0]
-      mocc  = IMF-averaged CCSN oxygen yield [0.0071]
-      mmgcc  = IMF-averaged CCSN magnessium yield [0.0007] 
+      mocc = IMF-averaged CCSN oxygen yield [0.0071]
+      mmgcc = IMF-averaged CCSN magnessium yield [0.0007] 
       mfecc = IMF-averaged CCSN iron yield [0.0005]
       mfeIa = IMF-averaged SNIa iron yield over 10 Gyr [0.0007]
       r = recycling fraction [0.4, based on Kroupa IMF]
-      SolarO  = solar oxygen mass fraction [0.0073]
-      SolarMg  = solar magnessium mass fraction [0.0007]
+      SolarO = solar oxygen mass fraction [0.0073]
+      SolarMg = solar magnessium mass fraction [0.0007]
       SolarFe = solar iron mass fraction [0.0014]
       tauIa = e-folding time for SNIa DTD [1.5]
               tauIa <= 0, will use double-exp approximation to power-law
@@ -155,13 +155,13 @@ def waf_linexp(t,mocc,mmgcc,mfecc,mfeIa,r,SolarO,SolarMg,SolarFe,tauIa,tdmin,eta
 
     Input arguments (illustrative values in [  ]):
       t = time array for desired outputs [0.0,0.02,0.04, ..., 12.0]
-      mocc  = IMF-averaged CCSN oxygen yield [0.0071]
-      mmgcc  = IMF-averaged CCSN magnessium yield [0.0007] 
+      mocc = IMF-averaged CCSN oxygen yield [0.0071]
+      mmgcc = IMF-averaged CCSN magnessium yield [0.0007] 
       mfecc = IMF-averaged CCSN iron yield [0.0005]
       mfeIa = IMF-averaged SNIa iron yield over 10 Gyr [0.0007]
       r = recycling fraction [0.4, based on Kroupa IMF]
-      SolarO  = solar oxygen mass fraction [0.0073]
-      SolarMg  = solar magnessium mass fraction [0.0007]
+      SolarO = solar oxygen mass fraction [0.0073]
+      SolarMg = solar magnessium mass fraction [0.0007]
       SolarFe = solar iron mass fraction [0.0014]
       tauIa = e-folding time for SNIa DTD [1.5]
               tauIa <= 0, will use double-exp approximation to power-law
@@ -285,13 +285,13 @@ def fance(t,mocc,mmgcc,mfecc,fret,mfeIa,r,SolarO,SolarMg,SolarFe,tauIa,tdmin,eta
 
     Input arguments (illustrative values in [  ]):
       t = time array for desired outputs [0.0,0.02,0.04, ..., 12.0]
-      mocc  = IMF-averaged CCSN oxygen yield [0.0071]
-      mmgcc  = IMF-averaged CCSN magnessium yield [0.0007] 
+      mocc = IMF-averaged CCSN oxygen yield [0.0071]
+      mmgcc = IMF-averaged CCSN magnessium yield [0.0007] 
       mfecc = IMF-averaged CCSN iron yield [0.0005]
       mfeIa = IMF-averaged SNIa iron yield over 10 Gyr [0.0007]
       r = recycling fraction [0.4, based on Kroupa IMF]
-      SolarO  = solar oxygen mass fraction [0.0073]
-      SolarMg  = solar magnessium mass fraction [0.0007]
+      SolarO = solar oxygen mass fraction [0.0073]
+      SolarMg = solar magnessium mass fraction [0.0007]
       SolarFe = solar iron mass fraction [0.0014]
       tauIa = e-folding time for SNIa DTD [1.5]
               tauIa <= 0, will use double-exp approximation to power-law
