@@ -25,13 +25,15 @@ by a factor fret, with the same eta.
 
 """
 
-def waf(t,mocc,mmgcc,mfecc,mfeIa,r,SolarO,SolarMg,SolarFe,tauIa,tdmin,eta,tauStar,tauSfh):
+def waf(tstart,t0,dtout,mocc,mmgcc,mfecc,mfeIa,r,SolarO,SolarMg,SolarFe,tauIa,tdmin,eta,tauStar,tauSfh):
     """
     Compute [O/H], [Mg/H], [Fe/H], [O/Fe], and [Mg/Fe] tracks using WAF analytic model for
     constant SFR or exponentially declining SFR
 
     Input arguments (illustrative values in [  ]):
-      t = time array for desired outputs [0.0,0.02,0.04, ..., 12.0]
+      tstart = star formation start time [0.5]
+      t0 = maximum time [14]
+      dtout = output timestep [0.02]
       mocc = IMF-averaged CCSN oxygen yield [0.0071]
       mmgcc = IMF-averaged CCSN magnessium yield [0.0007] 
       mfecc = IMF-averaged CCSN iron yield [0.0005]
@@ -62,6 +64,12 @@ def waf(t,mocc,mmgcc,mfecc,mfeIa,r,SolarO,SolarMg,SolarFe,tauIa,tdmin,eta,tauSta
     """
 
     import numpy as np
+    
+    tmax = t0 - tstart                        # maximum time
+    
+    tmod = np.arange(dtout, tmax+1.e-5,dtout) # fance() input time 
+    
+    t = tmod + tstart                         # actual time
 
     # these near-unit multiplications will be used to ensure that timescales
     # don't actually become equal to each other causing divide-by-zero errors
@@ -121,7 +129,7 @@ def waf(t,mocc,mmgcc,mfecc,mfeIa,r,SolarO,SolarMg,SolarFe,tauIa,tdmin,eta,tauSta
     # deltat rather than t enters for SNIa calculations
     deltat=t-tdmin
     # equations 50, 52, and 53 of WAF
-    Zo=ZoEq*(1.-np.exp(-t/tauDepSfh))
+    Zo=ZoEq*(1.-np.exp(-tmod/tauDepSfh))
     Zmgcc=Zo*ZfmgEq/ZoEq
     Zfecc=Zo*ZfeccEq/ZoEq
     ZfeIa1=ZfeIaEq1*(1.-np.exp(-deltat/tauDepSfh)-(tauDepIa1/tauDepSfh)* 
@@ -130,13 +138,13 @@ def waf(t,mocc,mmgcc,mfecc,mfeIa,r,SolarO,SolarMg,SolarFe,tauIa,tdmin,eta,tauSta
                      (np.exp(-deltat/tauIaSfh2)-np.exp(-deltat/tauDepSfh)))
 
     # zero SNIa contribution before tdmin    
-    ZfeIa1[t<tdmin]=0.
-    ZfeIa2[t<tdmin]=0.
+    ZfeIa1[tmod<tdmin]=0.
+    ZfeIa2[tmod<tdmin]=0.
     Zfe=Zfecc+ZfeIa1+ZfeIa2 # sum iron contributions
 
-    sfr=np.ones(len(t))
+    sfr=np.ones(len(tmod))
     if (tauSfh>0.0):
-        sfr=np.exp(-t/tauSfh)
+        sfr=np.exp(-tmod/tauSfh)
     sfrtot=sum(sfr)
     sfr=sfr/sfrtot          # fraction of star formation per bin
 
@@ -146,15 +154,17 @@ def waf(t,mocc,mmgcc,mfecc,mfeIa,r,SolarO,SolarMg,SolarFe,tauIa,tdmin,eta,tauSta
     FeH=np.log10(Zfe/SolarFe)
     OFe=OH-FeH
     MgFe=MgH-FeH
-    return sfr,OH,MgH,FeH,OFe,MgFe
+    return t,sfr,OH,MgH,FeH,OFe,MgFe
 
-def waf_linexp(t,mocc,mmgcc,mfecc,mfeIa,r,SolarO,SolarMg,SolarFe,tauIa,tdmin,eta,tauStar,tauSfh):
+def waf_linexp(tstart,t0,dtout,mocc,mmgcc,mfecc,mfeIa,r,SolarO,SolarMg,SolarFe,tauIa,tdmin,eta,tauStar,tauSfh):
     """
     Compute [O/H], [Mg/H], [Fe/H], [O/Fe], and [Mg/Fe] tracks using WAF analytic model for 
      linear-exponential (a.k.a. "delayed tau") star formation history
 
     Input arguments (illustrative values in [  ]):
-      t = time array for desired outputs [0.0,0.02,0.04, ..., 12.0]
+      tstart = star formation start time [0.5]
+      t0 = maximum time [14]
+      dtout = output timestep [0.02]
       mocc = IMF-averaged CCSN oxygen yield [0.0071]
       mmgcc = IMF-averaged CCSN magnessium yield [0.0007] 
       mfecc = IMF-averaged CCSN iron yield [0.0005]
@@ -184,6 +194,12 @@ def waf_linexp(t,mocc,mmgcc,mfecc,mfeIa,r,SolarO,SolarMg,SolarFe,tauIa,tdmin,eta
     """
 
     import numpy as np
+    
+    tmax = t0 - tstart                        # maximum time
+    
+    tmod = np.arange(dtout, tmax+1.e-5,dtout) # fance() input time 
+    
+    t = tmod + tstart                         # actual time
 
     # these near-unit multiplications will be used to ensure that timescales
     # don't actually become equal to each other causing divide-by-zero errors
@@ -241,9 +257,9 @@ def waf_linexp(t,mocc,mmgcc,mfecc,mfeIa,r,SolarO,SolarMg,SolarFe,tauIa,tdmin,eta
                            np.exp(tdmin/tauSfh))
 
     # deltat rather than t enters for SNIa calculations
-    deltat=t-tdmin
+    deltat=tmod-tdmin
     # equations 56-58 of WAF
-    Zo=ZoEq*(1.-(tauDepSfh/t)*(1.-np.exp(-t/tauDepSfh)))
+    Zo=ZoEq*(1.-(tauDepSfh/tmod)*(1.-np.exp(-tmod/tauDepSfh)))
     Zmgcc=Zo*ZmgEq/ZoEq
     Zfecc=Zo*ZfeccEq/ZoEq
     ZfeIa1=ZfeIaEq1*(tauIaSfh1/t)*(
@@ -252,7 +268,7 @@ def waf_linexp(t,mocc,mmgcc,mfecc,mfeIa,r,SolarO,SolarMg,SolarFe,tauIa,tdmin,eta
            (1.+(tauDepSfh/tauIaSfh1)-(tauDepIa1/tauDepSfh))*
            np.exp(-deltat/tauDepSfh) -
            (1.+(tauDepSfh/tauIaSfh1)) )
-    ZfeIa2=ZfeIaEq2*(tauIaSfh2/t)*(
+    ZfeIa2=ZfeIaEq2*(tauIaSfh2/tmod)*(
            deltat/tauIaSfh2 + 
            (tauDepIa2/tauDepSfh)*np.exp(-deltat/tauIaSfh2) + 
            (1.+(tauDepSfh/tauIaSfh2)-(tauDepIa2/tauDepSfh))*
@@ -260,13 +276,13 @@ def waf_linexp(t,mocc,mmgcc,mfecc,mfeIa,r,SolarO,SolarMg,SolarFe,tauIa,tdmin,eta
            (1.+(tauDepSfh/tauIaSfh2)) )
 
     # zero SNIa contribution before tdmin    
-    ZfeIa1[t<tdmin]=0.
-    ZfeIa2[t<tdmin]=0.
+    ZfeIa1[tmod<tdmin]=0.
+    ZfeIa2[tmod<tdmin]=0.
     Zfe=Zfecc+ZfeIa1+ZfeIa2  # sum iron contributions
 
-    sfr=np.ones(len(t))
+    sfr=np.ones(len(tmod))
     if (tauSfh>0.0):
-        sfr=t*np.exp(-t/tauSfh)
+        sfr=t*np.exp(-tmod/tauSfh)
     sfrtot=sum(sfr)
     sfr=sfr/sfrtot           # fraction of star formation per bin
 
@@ -276,15 +292,17 @@ def waf_linexp(t,mocc,mmgcc,mfecc,mfeIa,r,SolarO,SolarMg,SolarFe,tauIa,tdmin,eta
     FeH=np.log10(Zfe/SolarFe)
     OFe=OH-FeH
     MgFe=MgH-FeH
-    return sfr,OH,MgH,FeH,OFe,MgFe
+    return t, sfr,OH,MgH,FeH,OFe,MgFe
 
-def fance(t,mocc,mmgcc,mfecc,fret,mfeIa,r,SolarO,SolarMg,SolarFe,tauIa,tdmin,eta,
+def fance(tstart,t0,dtout,mocc,mmgcc,mfecc,fret,mfeIa,r,SolarO,SolarMg,SolarFe,tauIa,tdmin,eta,
           tauStar,tau1,tau2):
     """
     Compute [O/H], [Mg/H], [Fe/H], [O/Fe] and [Mg/Fe] tracks using analytic model for rise-fall SFH
 
     Input arguments (illustrative values in [  ]):
-      t = time array for desired outputs [0.0,0.02,0.04, ..., 12.0]
+      tstart = star formation start time [0.5]
+      t0 = maximum time [14]
+      dtout = output timestep [0.02]
       mocc = IMF-averaged CCSN oxygen yield [0.0071]
       mmgcc = IMF-averaged CCSN magnessium yield [0.0007] 
       mfecc = IMF-averaged CCSN iron yield [0.0005]
@@ -304,7 +322,7 @@ def fance(t,mocc,mmgcc,mfecc,fret,mfeIa,r,SolarO,SolarMg,SolarFe,tauIa,tdmin,eta
                    tau1=0 -> pure exponential decline
                    tau1=tau2=0 -> constant SFR
     Returns:
-      SFR, OH, MgH, FeH, OFe, and MgFe
+      t, SFR, OH, MgH, FeH, OFe, and MgFe
       each a 1-d array evaluated at the times in t
       SFR is normalized to sum to 1.0, so for evenly spaced t it is the
       fraction of stars formed in each bin
@@ -314,14 +332,20 @@ def fance(t,mocc,mmgcc,mfecc,fret,mfeIa,r,SolarO,SolarMg,SolarFe,tauIa,tdmin,eta
     """
 
     import numpy as np
+   
+    tmax = t0 - tstart                        # maximum time
+    
+    tmod = np.arange(dtout, tmax+1.e-5,dtout) # fance() input time 
+    
+    t = tmod + tstart                         # actual time
 
     # fret < 1 is equivalent to reducing CCSN yield for the same eta
     mocc*=fret
     mmgcc*=fret
     mfecc*=fret
 
-    if (tau1<=0):	# rise timescale = 0, so just exp with tauSfh=tau2
-        sfr,OH,MgH,FeH,OFe,MgFe=waf(t,mocc,mmgcc,mfecc,mfeIa,r,SolarO,SolarMg,SolarFe,tauIa,tdmin,eta,tauStar,tau2)
+    if (tau1<=0):  # rise timescale = 0, so just exp with tauSfh=tau2
+        sfr,OH,MgH,FeH,OFe,MgFe=waf(tmod,mocc,mmgcc,mfecc,mfeIa,r,SolarO,SolarMg,SolarFe,tauIa,tdmin,eta,tauStar,tau2)
     else:
         """
         For tau1>0, the SFH can be written as 
@@ -336,18 +360,18 @@ def fance(t,mocc,mmgcc,mfecc,fret,mfeIa,r,SolarO,SolarMg,SolarFe,tauIa,tdmin,eta
         else:
             tauh=1/(1/tau1 + 1/tau2)
 
-        sfr1,OH1,MgH1,FeH1,OFe1,MgFe1=waf(t,mocc,mmgcc,mfecc,mfeIa,r,SolarO,SolarMg,SolarFe,tauIa,tdmin,
+        sfr1,OH1,MgH1,FeH1,OFe1,MgFe1=waf(tmod,mocc,mmgcc,mfecc,mfeIa,r,SolarO,SolarMg,SolarFe,tauIa,tdmin,
                            eta,tauStar,tau2)
-        sfr2,OH2,MgH2,FeH2,OFe2,MgFe2=waf(t,mocc,mmgcc,mfecc,mfeIa,r,SolarO,SolarMg,SolarFe,tauIa,tdmin,
+        sfr2,OH2,MgH2,FeH2,OFe2,MgFe2=waf(tmod,mocc,mmgcc,mfecc,mfeIa,r,SolarO,SolarMg,SolarFe,tauIa,tdmin,
                            eta,tauStar,tauh)
 
         # returned sfr arrays are separately normalized, so we need to recompute
         if (tau2<=0):
-            sfr1=np.ones(len(t))  # constant SFR
+            sfr1=np.ones(len(tmod))  # constant SFR
         else:
-            sfr1=np.exp(-t/tau2)
-        sfr2= -1.*np.exp(-t/tauh) # note negative pre-factor
-        sfr=sfr1+sfr2	
+            sfr1=np.exp(-tmod/tau2)
+        sfr2= -1.*np.exp(-tmod/tauh) # note negative pre-factor
+        sfr=sfr1+sfr2
 
     # Now we use WAF eq. 117, but we need to convert to linear metallicity
         Zo1= SolarO*(10**OH1)
@@ -370,7 +394,7 @@ def fance(t,mocc,mmgcc,mfecc,fret,mfeIa,r,SolarO,SolarMg,SolarFe,tauIa,tdmin,eta
         sfrtot=sum(sfr)
         sfr=sfr/sfrtot            # fraction of star formation per bin
 
-    return sfr,OH,MgH,FeH,OFe,MgFe
+    return t,sfr,OH,MgH,FeH,OFe,MgFe
 
 def mdf(xmin,xmax,dx,xh,sfr):
     import numpy as np
@@ -378,9 +402,9 @@ def mdf(xmin,xmax,dx,xh,sfr):
     x=np.arange(xmin,xmax,dx)
     y=np.zeros(len(x))
     for i in np.arange(len(xh)):
-	# which metallicity bin does this timestep fall into?
+    # which metallicity bin does this timestep fall into?
         ibin=np.int((xh[i]-xmin)/dx+0.5)
-	# values outside range are added to first or last bin
+    # values outside range are added to first or last bin
         ibin=np.clip(ibin,0,len(x)-1)
         # add to mdf a quantity proportional to stars formed in that time bin
         y[ibin]+=sfr[i]	
