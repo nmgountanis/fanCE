@@ -29,14 +29,24 @@ mpl.rcParams["ytick.minor.visible"] = True
 mpl.rcParams['legend.title_fontsize'] = 18
 mpl.rcParams["errorbar.capsize"] = 3
 
-def plotSFR(t,sfr,label=True, axes=None):
+def plotSFH(t,sfr,dtout,labels,axes=None):
     
     """
     Plots the observed velocity function (no completeness corrections).
     """
-    if axes==None: axes = plt.gca()
-    obssigmas = np.array([ dwarf['sigma'] for dwarf_name,dwarf in dwarfs.items() if dwarf['sigma'] != None ])
-    axes.plot(t,obsvfxn,color='0.5',label='observed' if label==True else '') # 'k' if plotband else 'C5' # obs
+    fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(6, 6))
+    plt.style.use('seaborn-v0_8-colorblind')
 
+    linew = 3
     
+    if axes==None: axes = plt.gca()
+        
+    ax.plot(t,sfr/dtout,color="C0",label=labels, linewidth=linew)
     
+    ax.set_ylabel('SFR')
+    ax.set_xlabel('time [Gyr]')
+    ax.set_xlim([-0.5, 14.5])
+    ax.set_ylim([0, .17])
+    ax.yaxis.set_ticks([0,.05,.1, .15])
+    ax.legend(title= "$\\tau_1$, $\\tau_2$, t$_{\mathrm{start}}$", fontsize="18", loc = "upper right")
+    plt.tight_layout()
