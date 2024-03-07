@@ -1,34 +1,71 @@
 import numpy as np
 
-'''
-All timescales are given in Gyr
-'''
 
-def time(tstart, t0, dtout):
-     
+def weight(t,t0):
+    
     """
-
+    Compute weighting function
+    
     Input arguments (illustrative values in [  ]):
-      tstart = star formation start time [0.5]
-      t0 = maximum time [14]
-      dtout = output timestep [0.02]
+      t = time array for desired outputs [0.0,0.02,0.04, ..., 12.0]
+      t0 = age of universe at observed redshift [14]
+           t0=0 returns weight=1, corresponding to mass-weighting
 
     Returns:
-      tmod + tstart, a 1-d time array that goes from t_start + dtout to t0 with a
-                     timestep of dtout
-      tmod, a 1-d time array 
-      
-      
+      weighting function, a 1-d array evaluated at the times in t. 
 
     Time unit is Gyr
     
     """
-    # Define tmax 
-    tmax = t0 - tstart
     
-    # Define tmod
-    tmod = np.arange(dtout, tmax+1.e-5,dtout)
+    if t0 == 0:
+        return 1                               # weight=1 corresponds to mass-weighting
+    
+    
+    else:
+        return 1.5 * ((t0 - t + 0.1)**-0.78)   # light-weighting based off Gountanis+24 eq. 9
+    
+    
+    
+def stellar(t,t0,sfr,weight,OH,MgH,FeH,OFe,MgFe):
+    
+    """
+    Compute light-weighted, log-averaged age and abundances.
+    
+    Input arguments (illustrative values in [  ]):
+      t = time array for desired outputs [0.0,0.02,0.04, ..., 12.0]
+      t0 = age of universe at observed redshift [14]
+      sfr = star formation rate [4.03277751e-05,...7.50721612e-04]
+      weight = light-weighting [0.19607826, 0.1963038, ..., 9.03839379]
+      OH = [O/H] evaluated at the times in t
+      MgH = [Mg/H] evaluated at the times in t
+      FeH = [Fe/H] evaluated at the times in t
+      OFe = [O/Fe] evaluated at the times in t
+      MFe = [Mg/Fe] evaluated at the times in t
 
-    # return time array
-    return tmod + tstart, tmod
+    Returns:
+      mean_age,OHStar,MgHStar,FeHStar,OFeStar, MgFeStar
+      each a 1-d array evaluated at the times in t
+
+    Time unit is Gyr
     
+    """
+                
+    OHStar = np.cumsum(OH*sfr*weight)/np.cumsum(weight*sfr)   # light-weighted, log-averaged [O/H]
+    
+    MgHStar = np.cumsum(MgH*sfr*weight)/np.cumsum(weight*sfr) # light-weighted, log-averaged [Mg/H]
+    
+    FeHStar = np.cumsum(FeH*sfr*weight)/np.cumsum(weight*sfr) # light-weighted, log-averaged [Fe/H]
+            
+    OFeStar = OHStar - FeHStar                                # light-weighted, log-averaged [O/Fe]
+    
+    MgFeStar = MgHStar - FeHStar                              # light-weighted, log-averaged [Mg/Fe]
+                
+    
+    # light-weighted, log-averaged age
+    mean_age = 10**(np.cumsum(np.log10(t0-t+1e-5)*sfr*weight)/np.cumsum(sfr*weight)) 
+    
+    return mean_age,OHStar,MgHStar,FeHStar,OFeStar,MgFeStar
+    
+    
+     
