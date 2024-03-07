@@ -32,7 +32,7 @@ def waf(tstart,t0,dtout,mocc,mmgcc,mfecc,mfeIa,r,SolarO,SolarMg,SolarFe,tauIa,td
 
     Input arguments (illustrative values in [  ]):
       tstart = star formation start time [0.5]
-      t0 = maximum time [14]
+      t0 = age of universe at observed redshift [14]
       dtout = output timestep [0.02]
       mocc = IMF-averaged CCSN oxygen yield [0.0071]
       mmgcc = IMF-averaged CCSN magnessium yield [0.0007] 
@@ -163,7 +163,7 @@ def waf_linexp(tstart,t0,dtout,mocc,mmgcc,mfecc,mfeIa,r,SolarO,SolarMg,SolarFe,t
 
     Input arguments (illustrative values in [  ]):
       tstart = star formation start time [0.5]
-      t0 = maximum time [14]
+      t0 = age of universe at observed redshift [14]
       dtout = output timestep [0.02]
       mocc = IMF-averaged CCSN oxygen yield [0.0071]
       mmgcc = IMF-averaged CCSN magnessium yield [0.0007] 
@@ -301,7 +301,7 @@ def fance(tstart,t0,dtout,mocc,mmgcc,mfecc,fret,mfeIa,r,SolarO,SolarMg,SolarFe,t
 
     Input arguments (illustrative values in [  ]):
       tstart = star formation start time [0.5]
-      t0 = maximum time [14]
+      t0 = age of universe at observed redshift [14]
       dtout = output timestep [0.02]
       mocc = IMF-averaged CCSN oxygen yield [0.0071]
       mmgcc = IMF-averaged CCSN magnessium yield [0.0007] 
