@@ -127,7 +127,7 @@ def waf(tstart,t0,dtout,mocc,mmgcc,mfecc,mfeIa,r,SolarO,SolarMg,SolarFe,tauIa,td
                            np.exp(tdmin/tauSfh))
 
     # deltat rather than t enters for SNIa calculations
-    deltat=t-tdmin
+    deltat=tmod-tdmin
     # equations 50, 52, and 53 of WAF
     Zo=ZoEq*(1.-np.exp(-tmod/tauDepSfh))
     Zmg=Zo*ZmgEq/ZoEq
@@ -148,7 +148,7 @@ def waf(tstart,t0,dtout,mocc,mmgcc,mfecc,mfeIa,r,SolarO,SolarMg,SolarFe,tauIa,td
     sfrtot=sum(sfr)
     sfr=sfr/sfrtot          # fraction of star formation per bin
 
-    # convert to [O/H], [Fe/H], [O/Fe]
+    # convert to [O/H], [Mg/H], [Fe/H], [O/Fe], [Mg/Fe]
     OH=np.log10(Zo/SolarO)
     MgH=np.log10(Zmg/SolarMg)
     FeH=np.log10(Zfe/SolarFe)
@@ -282,7 +282,7 @@ def waf_linexp(tstart,t0,dtout,mocc,mmgcc,mfecc,mfeIa,r,SolarO,SolarMg,SolarFe,t
 
     sfr=np.ones(len(tmod))
     if (tauSfh>0.0):
-        sfr=t*np.exp(-tmod/tauSfh)
+        sfr=tmod*np.exp(-tmod/tauSfh)
     sfrtot=sum(sfr)
     sfr=sfr/sfrtot           # fraction of star formation per bin
 
@@ -346,7 +346,9 @@ def fance(tstart,t0,dtout,mocc,mmgcc,mfecc,fret,mfeIa,r,SolarO,SolarMg,SolarFe,t
 
     if (tau1<=0):  # rise timescale = 0, so just exp with tauSfh=tau2
         t,sfr,OH,MgH,FeH,OFe,MgFe=waf(tstart,t0,dtout,mocc,mmgcc,mfecc,mfeIa,r,SolarO,SolarMg,SolarFe,tauIa,tdmin,eta,tauStar,tau2)
+    
     else:
+        
         """
         For tau1>0, the SFH can be written as 
         SFR = constant*[exp(-t/tau2)-exp(-t/tauh)], with tauh = (1/tau1+1/tau2).
@@ -375,14 +377,14 @@ def fance(tstart,t0,dtout,mocc,mmgcc,mfecc,fret,mfeIa,r,SolarO,SolarMg,SolarFe,t
 
     # Now we use WAF eq. 117, but we need to convert to linear metallicity
         Zo1= SolarO*(10**OH1)
-        Zmg1= SolarMg*(10**MgH1)
+        Zmg1=SolarMg*(10**MgH1)
         Zfe1=SolarFe*(10**FeH1)
         Zo2= SolarO*(10**OH2)
-        Zmg2= SolarO*(10**MgH2)
+        Zmg2=SolarMg*(10**MgH2)
         Zfe2=SolarFe*(10**FeH2)
-        Zo= (sfr1*Zo1+sfr2*Zo2)/sfr
+        Zo=  (sfr1*Zo1+sfr2*Zo2)/sfr
         Zmg= (sfr1*Zmg1+sfr2*Zmg2)/sfr
-        Zfe=(sfr1*Zfe1+sfr2*Zfe2)/sfr
+        Zfe= (sfr1*Zfe1+sfr2*Zfe2)/sfr
 
     # convert back to log quantities and return
         OH=np.log10(Zo/SolarO)
