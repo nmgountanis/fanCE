@@ -14,8 +14,11 @@ def time(tstart, t0, dtout):
       dtout = output timestep [0.02]
 
     Returns:
-      A 1-d time array that goes from t_start + dtout to t0 with a
-      timestep of dtout. 
+      tmod + tstart, a 1-d time array that goes from t_start + dtout to t0 with a
+                     timestep of dtout
+      tmod, a 1-d time array 
+      
+      
 
     Time unit is Gyr
     
@@ -27,5 +30,5 @@ def time(tstart, t0, dtout):
     tmod = np.arange(dtout, tmax+1.e-5,dtout)
 
     # return time array
-    return tmod + tstart
+    return tmod + tstart, tmod
     
