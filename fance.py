@@ -52,7 +52,7 @@ def waf(tstart,t0,dtout,mocc,mmgcc,mfecc,mfeIa,r,SolarO,SolarMg,SolarFe,tauIa,td
                if tauSfh <= 0, constant SFR will be used
 
     Returns:
-      SFR, OH, MgH, FeH, OFe, and MgFe
+      t, SFR, OH, MgH, FeH, OFe, and MgFe
       each a 1-d array evaluated at the times in t
       SFR is normalized to sum to 1.0, so for evenly spaced t it is the
       fraction of stars formed in each bin
@@ -130,7 +130,7 @@ def waf(tstart,t0,dtout,mocc,mmgcc,mfecc,mfeIa,r,SolarO,SolarMg,SolarFe,tauIa,td
     deltat=t-tdmin
     # equations 50, 52, and 53 of WAF
     Zo=ZoEq*(1.-np.exp(-tmod/tauDepSfh))
-    Zmgcc=Zo*ZfmgEq/ZoEq
+    Zmg=Zo*ZmgEq/ZoEq
     Zfecc=Zo*ZfeccEq/ZoEq
     ZfeIa1=ZfeIaEq1*(1.-np.exp(-deltat/tauDepSfh)-(tauDepIa1/tauDepSfh)* 
                      (np.exp(-deltat/tauIaSfh1)-np.exp(-deltat/tauDepSfh)))
@@ -182,7 +182,7 @@ def waf_linexp(tstart,t0,dtout,mocc,mmgcc,mfecc,mfeIa,r,SolarO,SolarMg,SolarFe,t
       tauSfh = e-folding timescale of SFH [8.0] 
 
     Returns:
-      SFR, OH, MgH, FeH, OFe, and MgFe
+      t, SFR, OH, MgH, FeH, OFe, and MgFe
       each a 1-d array evaluated at the times in t
       SFR is normalized to sum to 1.0, so for evenly spaced t it is the
       fraction of stars formed in each bin
@@ -260,7 +260,7 @@ def waf_linexp(tstart,t0,dtout,mocc,mmgcc,mfecc,mfeIa,r,SolarO,SolarMg,SolarFe,t
     deltat=tmod-tdmin
     # equations 56-58 of WAF
     Zo=ZoEq*(1.-(tauDepSfh/tmod)*(1.-np.exp(-tmod/tauDepSfh)))
-    Zmgcc=Zo*ZmgEq/ZoEq
+    Zmg=Zo*ZmgEq/ZoEq
     Zfecc=Zo*ZfeccEq/ZoEq
     ZfeIa1=ZfeIaEq1*(tauIaSfh1/t)*(
            deltat/tauIaSfh1 + 
@@ -345,7 +345,7 @@ def fance(tstart,t0,dtout,mocc,mmgcc,mfecc,fret,mfeIa,r,SolarO,SolarMg,SolarFe,t
     mfecc*=fret
 
     if (tau1<=0):  # rise timescale = 0, so just exp with tauSfh=tau2
-        sfr,OH,MgH,FeH,OFe,MgFe=waf(tmod,mocc,mmgcc,mfecc,mfeIa,r,SolarO,SolarMg,SolarFe,tauIa,tdmin,eta,tauStar,tau2)
+        t,sfr,OH,MgH,FeH,OFe,MgFe=waf(tstart,t0,dtout,mocc,mmgcc,mfecc,mfeIa,r,SolarO,SolarMg,SolarFe,tauIa,tdmin,eta,tauStar,tau2)
     else:
         """
         For tau1>0, the SFH can be written as 
@@ -360,9 +360,9 @@ def fance(tstart,t0,dtout,mocc,mmgcc,mfecc,fret,mfeIa,r,SolarO,SolarMg,SolarFe,t
         else:
             tauh=1/(1/tau1 + 1/tau2)
 
-        sfr1,OH1,MgH1,FeH1,OFe1,MgFe1=waf(tmod,mocc,mmgcc,mfecc,mfeIa,r,SolarO,SolarMg,SolarFe,tauIa,tdmin,
+        t,sfr1,OH1,MgH1,FeH1,OFe1,MgFe1=waf(tstart,t0,dtout,mocc,mmgcc,mfecc,mfeIa,r,SolarO,SolarMg,SolarFe,tauIa,tdmin,
                            eta,tauStar,tau2)
-        sfr2,OH2,MgH2,FeH2,OFe2,MgFe2=waf(tmod,mocc,mmgcc,mfecc,mfeIa,r,SolarO,SolarMg,SolarFe,tauIa,tdmin,
+        t,sfr2,OH2,MgH2,FeH2,OFe2,MgFe2=waf(tstart,t0,dtout,mocc,mmgcc,mfecc,mfeIa,r,SolarO,SolarMg,SolarFe,tauIa,tdmin,
                            eta,tauStar,tauh)
 
         # returned sfr arrays are separately normalized, so we need to recompute
@@ -378,6 +378,7 @@ def fance(tstart,t0,dtout,mocc,mmgcc,mfecc,fret,mfeIa,r,SolarO,SolarMg,SolarFe,t
         Zmg1= SolarMg*(10**MgH1)
         Zfe1=SolarFe*(10**FeH1)
         Zo2= SolarO*(10**OH2)
+        Zmg2= SolarO*(10**MgH2)
         Zfe2=SolarFe*(10**FeH2)
         Zo= (sfr1*Zo1+sfr2*Zo2)/sfr
         Zmg= (sfr1*Zmg1+sfr2*Zmg2)/sfr
