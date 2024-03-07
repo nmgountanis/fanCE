@@ -5,7 +5,7 @@ All timescales are given in Gyr
 '''
 
 tstart=0.5              # star formation start time
-t0=14.0                 # maximum time
+t0=14.0                 # age of universe at observed redshift
 dtout=0.02              # output timestep
 
 tauStar=1               # star formation efficiency timescale
