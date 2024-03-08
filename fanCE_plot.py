@@ -35,13 +35,17 @@ def plotSFH(t,sfr,dtout,labels,axes=None):
     Plots normalized star formation rate versus time
     
     Input arguments:
-      t = 1-d time array for desired outputs
-      sfr = star formation rate, 1-d array evaluated at the times in t
+      t      = 1-d time array for desired outputs
+      sfr    = star formation rate, 1-d array evaluated at the times in t
+      dtout  = output time step
       labels = string label
     
     Returns:
      A figure ploting the star formation history normalized to give the 
      galaxy's stellar mass formed per Gyr.
+     
+     
+     Time unit is Gyr
       
      """
     fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(5, 5))
@@ -69,17 +73,21 @@ def plotGas(t,MgH,FeH,MgFe,labels,axes=None):
     [O/H] and [O/Fe] are identical to [Mg/H] and [Mg/Fe].
     
     Input arguments:
-      t = 1-d time array for desired outputs
-      MgH = [Mg/H], 1-d array evaluated at the times in t
-      FeH = [Fe/H], 1-d array evaluated at the times in t
-      MFe = [Mg/Fe], 1-d array evaluated at the times in t
+      t      = 1-d time array for desired outputs
+      MgH    = [Mg/H], 1-d array evaluated at the times in t
+      FeH    = [Fe/H], 1-d array evaluated at the times in t
+      MFe    = [Mg/Fe], 1-d array evaluated at the times in t
       labels = string label
     
     Returns:
      A figure ploting [Mg/H], [Fe/H], and [Mg/Fe] versus time
      in seperate subfigures.
      
+     
+     Time unit is Gyr
+     
     """
+    
     fig, ax = plt.subplots(nrows=1, ncols=3, figsize=(18, 6))
     plt.style.use('seaborn-v0_8-colorblind')
 
@@ -107,12 +115,41 @@ def plotGas(t,MgH,FeH,MgFe,labels,axes=None):
     
 def plotStellar(t,sfr,dtout,mean_age,MgH,MgFe,MgHStar,MgFeStar,labels):
     
+    """
+    Plots normalized SFH, <age>, [Mg/H], <[Mg/H]>, [Mg/Fe] 
+    and <[Mg/Fe]> versus time and with <[Mg/H]> and <[Mg/Fe]>
+    versus <age>.
+    
+    [O/H], <[O/H]>, [O/Fe], and <[O/Fe]> are identical to 
+    [Mg/H], <[Mg/H]>, [Mg/Fe] and <[Mg/Fe]>
+    
+    Input arguments:
+      t = 1-d time array for desired outputs
+      sfr = star formation rate, 1-d array evaluated at the times in t
+      dtout  = output time step
+      mean_age = <age>, 1-d array evaluated at the times in t
+      MgH = [Mg/H], 1-d array evaluated at the times in t
+      MFe = [Mg/Fe], 1-d array evaluated at the times in t
+      MgHStar = <[Mg/H]>, 1-d array evaluated at the times in t
+      MFeStar = <[Mg/Fe]>, 1-d array evaluated at the times in t
+      labels = string label
+    
+    Returns:
+      Normalized SFH, <age>, [Mg/H], <[Mg/H]>, [Mg/Fe] 
+      and <[Mg/Fe]> versus time and with <[Mg/H]> and <[Mg/Fe]>
+      versus <age> in seperate subfigures.
+      
+      
+      Time unit is Gyr
+     
+    """
+    
     fig, ax = plt.subplots(nrows=4, ncols=2, figsize=(11, 18))
     plt.style.use('seaborn-v0_8-colorblind')
 
     linew = 3
 
-    ax[0,0].plot(t, sfr/p.dtout, c = "C2", linewidth=linew)
+    ax[0,0].plot(t, sfr/dtout, c = "C2", linewidth=linew)
     ax[0,0].set_xlabel('time (Gyr)', labelpad = -2)
     ax[0,0].set_ylabel('SFR')
     ax[0,0].set_xlim([-0.5, 14.5])
