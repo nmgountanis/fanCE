@@ -33,15 +33,15 @@ def stellar(t,t0,sfr,weight,OH,MgH,FeH,OFe,MgFe):
     Compute light-weighted, log-averaged age and abundances.
     
     Input arguments (illustrative values in [  ]):
-      t = time array for desired outputs [0.0,0.02,0.04, ..., 12.0]
-      t0 = age of universe at observed redshift [14]
-      sfr = star formation rate [4.03277751e-05,...7.50721612e-04]
+      t      = time array for desired outputs [0.0,0.02,0.04, ..., 12.0]
+      t0     = age of universe at observed redshift [14]
+      sfr    = star formation rate [4.03277751e-05,...7.50721612e-04]
       weight = light-weighting [0.19607826, 0.1963038, ..., 9.03839379]
-      OH = [O/H] evaluated at the times in t
-      MgH = [Mg/H] evaluated at the times in t
-      FeH = [Fe/H] evaluated at the times in t
-      OFe = [O/Fe] evaluated at the times in t
-      MFe = [Mg/Fe] evaluated at the times in t
+      OH     = [O/H] evaluated at the times in t
+      MgH    = [Mg/H] evaluated at the times in t
+      FeH    = [Fe/H] evaluated at the times in t
+      OFe    = [O/Fe] evaluated at the times in t
+      MFe    = [Mg/Fe] evaluated at the times in t
 
     Returns:
       mean_age,OHStar,MgHStar,FeHStar,OFeStar, MgFeStar
