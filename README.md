@@ -2,4 +2,4 @@
 
 # Flexible ANalytic Chemical Evolution
 
-fanCE is an analytic one-zone chemical evolution code. It implements the Weinberg, Andrews, & Freudenburg (2017) analytic solution for a constant, exponential declining, or linear-exponential (delayed tau) star formation history. It also implements a flexible, two-parameter star formation history $\propto(1-e^{-t/\tau_1})\cdote^{-t/\tau_2}$, which rises linearly on a timescale $\tau_1$ and then falls exponentially on a timescale $\tau_2$ for $\tau_1>\tau_2>0$.
+fanCE is an analytic one-zone chemical evolution code. It implements the Weinberg, Andrews, & Freudenburg (2017) analytic solution for a constant, exponential declining, or linear-exponential (delayed tau) star formation history. It also implements a flexible, two-parameter star formation history $\propto(1-e^{-t/\tau_1})\cdot e^{-t/\tau_2}$, which rises linearly on a timescale $\tau_1$ and then falls exponentially on a timescale $\tau_2$ for $\tau_1>\tau_2>0$.
