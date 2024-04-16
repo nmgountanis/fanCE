@@ -23,7 +23,7 @@ def weight(t,t0):
     
     
     else:
-        return 1.5 * ((t0 - t + 0.1)**-0.78)   # light-weighting based off Gountanis+24 eq. 9
+        return 1.5 * ((t0 - t + 0.1)**-0.9)   # light-weighting based off Gountanis+24 eq. 1
     
     
     
