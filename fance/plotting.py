@@ -1,7 +1,5 @@
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-import fanCE_par as p
-from fanCE import *
 
 mpl.rcParams["font.family"] = "serif"
 mpl.rcParams["text.usetex"] = True
