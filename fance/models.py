@@ -1,418 +1,356 @@
-"""
-Functions for analytic one-zone chemical evolution.
+import numpy as np
 
-The first, waf, implements the analytic solution of Weinberg, Andrews, & Freudenburg 
- (2017) for a constant or exponential declinining star formation history.
 
-The second, waf_linexp, implements the WAF solution for a linear-exponential
-(a.k.a. delayed tau) star formation history.
-
-The third, fance (flexible analytic chemical evolution), implements a two-parameter
-star formation history proportional to (1-exp(-t/tau1))*exp(-t/tau2). For tau2>tau1>0, 
-this form rises linearly at early times, reaches a maximum at 
-t = tau1*ln(1+tau2/tau1) ~ tau1, and falls exponentialy with a timescale tau2 at late times.
-
-The solution for this case can be implemented using equation (117) of WAF and 
-calls to the waf function.
-
-fance also allows for CCSN-enhanced winds by incorporating a retention factor,
-fret, for CCSN ejecta.  If fret<1, winds are assumed to be comprised of a 
-fraction (1-fret) of the CCSN ejecta that entrain sufficient ambient ISM
-to raise the overall mass-loading factor to eta.  If fret=1 this just becomes
-the usual case in which the galactic wind has the ambient ISM metallicity.
-It can be shown that choosing fret<1 is identical to reducing the CCSN yield
-by a factor fret, with the same eta.
-
-"""
-
-def waf(tstart,t0,dtout,mocc,mmgcc,mfecc,mfeIa,r,SolarO,SolarMg,SolarFe,tauIa,tdmin,eta,tauStar,tauSfh):
+def waf2017(
+    tmod: np.ndarray,
+    tauSFE: float = 1.0,
+    tauSFH: float = 8.0,
+    yOCC: float = 0.0071,
+    yMgCC: float = 0.0007,
+    yFeCC: float = 0.0005,
+    yFeIa: float = 0.0007,
+    r: float = 0.4,
+    eta: float = 0.3,
+    tauIa: float = 1.5,
+    tDminIa: float = 0.15,
+    SolarO: float = 0.0073,
+    SolarMg: float = 0.0007,
+    SolarFe: float = 0.0014,
+    SFH_fn: str = "exponential",
+    IaDTD_fn: str = "powerlaw",
+):
     """
-    Compute [O/H], [Mg/H], [Fe/H], [O/Fe], and [Mg/Fe] tracks using WAF analytic model for
-    constant SFR or exponentially declining SFR
+    Compute [O/H], [Mg/H], [Fe/H], [O/Fe] and [Mg/Fe] tracks using WAF analytic model for a constant,
+    exponentially declining, or linear-exponential SFR.
+    Reference: Weinberg, Andrews, & Freudenburg 2017, ApJ 837, 183 (Particularly Appendix C)
 
-    Input arguments (illustrative values in [  ]):
-      tstart = star formation start time [0.5]
-      t0 = age of universe at observed redshift [14]
-      dtout = output timestep [0.02]
-      mocc = IMF-averaged CCSN oxygen yield [0.0071]
-      mmgcc = IMF-averaged CCSN magnessium yield [0.0007] 
-      mfecc = IMF-averaged CCSN iron yield [0.0005]
-      mfeIa = IMF-averaged SNIa iron yield over 10 Gyr [0.0007]
-      r = recycling fraction [0.4, based on Kroupa IMF]
-      SolarO = solar oxygen mass fraction [0.0073]
-      SolarMg = solar magnessium mass fraction [0.0007]
-      SolarFe = solar iron mass fraction [0.0014]
-      tauIa = e-folding time for SNIa DTD [1.5]
-              tauIa <= 0, will use double-exp approximation to power-law
-      tdmin = minimum time delay for SNIa [0.05]
-              for tauIa <= 0 MUST choose tdmin = 0.05 or 0.15
-      eta = outflow mass loading factor [0.3]
-      tauStar = SFE efficiency timescale [1.0]
-      tauSfh = e-folding timescale of SFH [8.0] 
-               if tauSfh <= 0, constant SFR will be used
-
-    Returns:
-      t, SFR, OH, MgH, FeH, OFe, and MgFe
-      each a 1-d array evaluated at the times in t
-      SFR is normalized to sum to 1.0, so for evenly spaced t it is the
-      fraction of stars formed in each bin
-
-    Time unit is Gyr
-    Reference: Weinberg, Andrews, & Freudenburg 2017, ApJ 837, 183
-               Particularly Appendix C
-    
+    :param np.ndarray tmod: Input time array (in Gyr) for model.
+        Should be output time array - star formation start time.
+    :param float tauSFE: SFE efficiency timescale [1.0]
+    :param float tauSFH: e-folding timescale of SFH [8.0]
+        (Ignored if SFH_fn == 'constant')
+    :param float yOCC: IMF-averaged CCSN O yield [0.0071]
+    :param float yMgCC: IMF-averaged CCSN Mg yield [0.0007]
+    :param float yFeCC: IMF-averaged CCSN iron yield [0.0005]
+    :param float yFeIa: IMF-averaged SNIa iron yield over 10 Gyr [0.0007]
+    :param float r: recycling fraction [0.4, based on Kroupa IMF]
+    :param float eta: outflow mass loading factor [0.3]
+    :param float tauIa: = e-folding time for SNIa DTD [1.5]
+        (Ignored if IaDTD_fn == 'powerlaw')
+    :param float tDminIa: minimum time delay for SNIa [0.15]
+        (If IaDTD_fn == 'powerlaw', then tDminIa must be either 0.05 or 0.15)
+    :param float SolarO: Solar O mass fraction [0.0073]
+    :param float SolarMg: Solar Mg mass fraction [0.0007]
+    :param float SolarFe: Solar iron mass fraction [0.0014]
+    :param str SFH_fn: functional form of the SFH. ['exponential']
+        Must be one of 'constant', 'exponential', or 'linexp'
+    :param IaDTD_fn: functional form of the SN Ia DTD ['powerlaw']
+        Must be either 'exponential' or 'powerlaw'
+    :return Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+        SFR, OH, MgH, FeH, OFe, MgFe --- each a 1-d array corresponding to the time array, tmod
+        (SFR is normalized such that for evenly spaced tmod, it is the fraction of stars formed in each time step.)
     """
-
-    import numpy as np
-    
-    tmax = t0 - tstart                        # maximum time
-    
-    tmod = np.arange(dtout, tmax+1.e-5,dtout) # fance() input time 
-    
-    t = tmod + tstart                         # actual time
-
-    # these near-unit multiplications will be used to ensure that timescales
-    # don't actually become equal to each other causing divide-by-zero errors
-    xfac=1.0013478
-    yfac=1.0016523
-
-    # For tauIa=0, use double-exponential that approximates t^{-1.1} power-law
-    # see WAF section 5.1 and Appx C for details
-    # In this case, we require tdmin=0.05 or tdmin=0.15
-    if (tauIa<0.01):
-        if (tdmin==0.15):
-            tauIa1=0.5
-            tauIa2=5.0
-            norm1=0.478
-            norm2=0.522
-        elif (tdmin==0.05):
-            tdmin=0.05
-            tauIa1=0.25
-            tauIa2=3.5
-            norm1=0.493
-            norm2=0.507
+    # Prophylactically preventing divide-by-zero errors
+    xfac = 1.0013478
+    yfac = 1.0016523
+    # Parse Ia DTD
+    if IaDTD_fn == "exponential":
+        tauIa1 = tauIa
+        tauIa2 = tauIa
+        Ia_norm1 = 1.0
+        Ia_norm2 = 0.0
+    elif IaDTD_fn == "powerlaw":
+        if tDminIa == 0.05:
+            tauIa1 = 0.25
+            tauIa2 = 3.5
+            Ia_norm1 = 0.493
+            Ia_norm2 = 0.507
+        elif tDminIa == 0.15:
+            tauIa1 = 0.5
+            tauIa2 = 5.0
+            Ia_norm1 = 0.478
+            Ia_norm2 = 0.522
         else:
-            print ("can't set DTD parameters for this tdmin\n")
-            sys.exit()
-    # otherwise set normalization of second exponential to zero
+            RuntimeError(
+                "tDminIa must be either 0.05 or 0.15 if IaDTD_fn == 'powerlaw' "
+            )
     else:
-        tauIa1=tauIa
-        tauIa2=tauIa
-        norm1=1.0
-        norm2=0.0
-
-    # compute harmonic difference timescales
-    tauStar*=xfac
-    tauSfh*=yfac
-    tauDep=tauStar/(1+eta-r)
-    tauDepIa1=1./(1./tauDep-1./tauIa1)
-    tauDepIa2=1./(1./tauDep-1./tauIa2)
-    if (tauSfh>0.0):
-        tauDepSfh=1./(1./tauDep-1./tauSfh)
-        tauIaSfh1=1./(1./tauIa1-1./tauSfh)
-        tauIaSfh2=1./(1./tauIa2-1./tauSfh)
+        raise RuntimeError("IaDTD_fn must be either 'exponential' or 'powerlaw' ")
+    # Compute "Harmonic Difference" Timescales
+    tauSFE *= xfac
+    tauSFH *= yfac
+    tauDep = tauSFE / (1 + eta - r)
+    tauDepIa1 = 1.0 / (1.0 / tauDep - 1.0 / tauIa1)
+    tauDepIa2 = 1.0 / (1.0 / tauDep - 1.0 / tauIa2)
+    if SFH_fn == "constant":
+        tauDepSFH = tauDep
+        tauIaSFH1 = tauIa1
+        tauIaSFH2 = tauIa2
+        tauSFH = 1e8
+    elif SFH_fn in ["exponential", "linexp"]:
+        tauDepSFH = 1.0 / (1.0 / tauDep - 1.0 / tauSFH)
+        tauIaSFH1 = 1.0 / (1.0 / tauIa1 - 1.0 / tauSFH)
+        tauIaSFH2 = 1.0 / (1.0 / tauIa2 - 1.0 / tauSFH)
     else:
-        tauDepSfh=tauDep
-        tauIaSfh1=tauIa1
-        tauIaSfh2=tauIa2
-        tauSfh=1.e8
+        RuntimeError("SFH_fn must be one of 'constant', 'exponential', or 'linexp' ")
+    # Compute equilibrium abundances, WAF equations 28-30
+    ZOEq = yOCC * tauDepSFH / tauSFE
+    ZMgEq = yMgCC * tauDepSFH / tauSFE
+    ZFeCCEq = yFeCC * tauDepSFH / tauSFE
+    ZFeIaEq1 = (
+        Ia_norm1
+        * yFeIa
+        * ((tauDepSFH / tauSFE) * (tauIaSFH1 / tauIa1) * np.exp(tDminIa / tauSFH))
+    )
+    ZFeIaEq2 = (
+        Ia_norm2
+        * yFeIa
+        * ((tauDepSFH / tauSFE) * (tauIaSFH2 / tauIa2) * np.exp(tDminIa / tauSFH))
+    )
+    # Compute non-equilibrium abundances
+    if SFH_fn in ["constant", "exponential"]:  # WAF equations 50, 52, and 53
+        delta_t = tmod - tDminIa
+        ZO = ZOEq * (1.0 - np.exp(-tmod / tauDepSFH))
+        ZMg = ZMgEq * (1.0 - np.exp(-tmod / tauDepSFH))
+        ZFeCC = ZO * ZFeCCEq / ZOEq
+        ZFeIa1 = ZFeIaEq1 * (
+            1.0
+            - np.exp(-delta_t / tauDepSFH)
+            - (tauDepIa1 / tauDepSFH)
+            * (np.exp(-delta_t / tauIaSFH1) - np.exp(-delta_t / tauDepSFH))
+        )
+        ZFeIa2 = ZFeIaEq2 * (
+            1.0
+            - np.exp(-delta_t / tauDepSFH)
+            - (tauDepIa2 / tauDepSFH)
+            * (np.exp(-delta_t / tauIaSFH2) - np.exp(-delta_t / tauDepSFH))
+        )
+    elif SFH_fn == "linexp":  # WAF equations 56-58
+        delta_t = tmod - tDminIa
+        ZO = ZOEq * (1.0 - (tauDepSFH / tmod) * (1.0 - np.exp(-tmod / tauDepSFH)))
+        ZMg = ZMgEq * (1.0 - (tauDepSFH / tmod) * (1.0 - np.exp(-tmod / tauDepSFH)))
+        ZFeCC = ZO * ZFeCCEq / ZOEq
+        ZFeIa1 = (
+            ZFeIaEq1
+            * (tauIaSFH1 / tmod)
+            * (
+                delta_t / tauIaSFH1
+                + (tauDepIa1 / tauDepSFH) * np.exp(-delta_t / tauIaSFH1)
+                + (1.0 + (tauDepSFH / tauIaSFH1) - (tauDepIa1 / tauDepSFH))
+                * np.exp(-delta_t / tauDepSFH)
+                - (1.0 + (tauDepSFH / tauIaSFH1))
+            )
+        )
+        ZFeIa2 = (
+            ZFeIaEq2
+            * (tauIaSFH2 / tmod)
+            * (
+                delta_t / tauIaSFH2
+                + (tauDepIa2 / tauDepSFH) * np.exp(-delta_t / tauIaSFH2)
+                + (1.0 + (tauDepSFH / tauIaSFH2) - (tauDepIa2 / tauDepSFH))
+                * np.exp(-delta_t / tauDepSFH)
+                - (1.0 + (tauDepSFH / tauIaSFH2))
+            )
+        )
+    else:
+        RuntimeError("SFH_fn must be one of 'constant', 'exponential', or 'linexp' ")
+    ZFeIa1[tmod < tDminIa] = 0
+    ZFeIa2[tmod < tDminIa] = 0
+    ZFe = ZFeCC + ZFeIa1 + ZFeIa2
+    # Compute SFR
+    if SFH_fn == "constant":
+        SFR = np.ones_like(tmod)
+    elif SFH_fn == "exponential":
+        SFR = np.exp(-tmod / tauSFH)
+    elif SFH_fn == "linexp":
+        SFR = tmod * np.exp(-tmod / tauSFH)
+    else:
+        RuntimeError("SFH_fn must be one of 'constant', 'exponential', or 'linexp' ")
+    SFR /= np.sum(SFR)
+    # Convert to [Alpha/H], [Fe/H]
+    OH = np.log10(ZO / SolarO)
+    MgH = np.log10(ZMg / SolarMg)
+    FeH = np.log10(ZFe / SolarFe)
+    OFe = OH - FeH
+    MgFe = MgH - FeH
+    return SFR, OH, MgH, FeH, OFe, MgFe
 
-    # compute equilibrium abundances, WAF equations 28-30
-    ZoEq=mocc*tauDepSfh/tauStar
-    ZmgEq=mmgcc*tauDepSfh/tauStar
-    ZfeccEq=mfecc*tauDepSfh/tauStar
-    ZfeIaEq1=norm1*mfeIa*((tauDepSfh/tauStar)*(tauIaSfh1/tauIa1)*
-                           np.exp(tdmin/tauSfh))
-    ZfeIaEq2=norm2*mfeIa*((tauDepSfh/tauStar)*(tauIaSfh2/tauIa2)*
-                           np.exp(tdmin/tauSfh))
 
-    # deltat rather than t enters for SNIa calculations
-    deltat=tmod-tdmin
-    # equations 50, 52, and 53 of WAF
-    Zo=ZoEq*(1.-np.exp(-tmod/tauDepSfh))
-    Zmg=Zo*ZmgEq/ZoEq
-    Zfecc=Zo*ZfeccEq/ZoEq
-    ZfeIa1=ZfeIaEq1*(1.-np.exp(-deltat/tauDepSfh)-(tauDepIa1/tauDepSfh)* 
-                     (np.exp(-deltat/tauIaSfh1)-np.exp(-deltat/tauDepSfh)))
-    ZfeIa2=ZfeIaEq2*(1.-np.exp(-deltat/tauDepSfh)-(tauDepIa2/tauDepSfh)* 
-                     (np.exp(-deltat/tauIaSfh2)-np.exp(-deltat/tauDepSfh)))
-
-    # zero SNIa contribution before tdmin    
-    ZfeIa1[tmod<tdmin]=0.
-    ZfeIa2[tmod<tdmin]=0.
-    Zfe=Zfecc+ZfeIa1+ZfeIa2 # sum iron contributions
-
-    sfr=np.ones(len(tmod))
-    if (tauSfh>0.0):
-        sfr=np.exp(-tmod/tauSfh)
-    sfrtot=sum(sfr)
-    sfr=sfr/sfrtot          # fraction of star formation per bin
-
-    # convert to [O/H], [Mg/H], [Fe/H], [O/Fe], [Mg/Fe]
-    OH=np.log10(Zo/SolarO)
-    MgH=np.log10(Zmg/SolarMg)
-    FeH=np.log10(Zfe/SolarFe)
-    OFe=OH-FeH
-    MgFe=MgH-FeH
-    return t,sfr,OH,MgH,FeH,OFe,MgFe
-
-def waf_linexp(tstart,t0,dtout,mocc,mmgcc,mfecc,mfeIa,r,SolarO,SolarMg,SolarFe,tauIa,tdmin,eta,tauStar,tauSfh):
+def fance(
+    tmod: np.ndarray,
+    tauSFE: float = 1.0,
+    tauSFH1: float = 2.0,
+    tauSFH2: float = 8.0,
+    yOCC: float = 0.0071,
+    yMgCC: float = 0.0007,
+    yFeCC: float = 0.0005,
+    yFeIa: float = 0.0007,
+    fRetCC: float = 1.0,
+    r: float = 0.4,
+    eta: float = 0.3,
+    tauIa: float = 1.5,
+    tDminIa: float = 0.05,
+    SolarO: float = 0.0073,
+    SolarMg: float = 0.0007,
+    SolarFe: float = 0.0014,
+    IaDTD_fn: str = "exponential",
+):
     """
-    Compute [O/H], [Mg/H], [Fe/H], [O/Fe], and [Mg/Fe] tracks using WAF analytic model for 
-     linear-exponential (a.k.a. "delayed tau") star formation history
+    Compute [O/H], [Mg/H], [Fe/H], [O/Fe] and [Mg/Fe] tracks using WAF analytic model for a rise-fall SFR.
+    Reference: Weinberg, Andrews, & Freudenburg 2017, ApJ 837, 183 (Particularly Appendix C)
 
-    Input arguments (illustrative values in [  ]):
-      tstart = star formation start time [0.5]
-      t0 = age of universe at observed redshift [14]
-      dtout = output timestep [0.02]
-      mocc = IMF-averaged CCSN oxygen yield [0.0071]
-      mmgcc = IMF-averaged CCSN magnessium yield [0.0007] 
-      mfecc = IMF-averaged CCSN iron yield [0.0005]
-      mfeIa = IMF-averaged SNIa iron yield over 10 Gyr [0.0007]
-      r = recycling fraction [0.4, based on Kroupa IMF]
-      SolarO = solar oxygen mass fraction [0.0073]
-      SolarMg = solar magnessium mass fraction [0.0007]
-      SolarFe = solar iron mass fraction [0.0014]
-      tauIa = e-folding time for SNIa DTD [1.5]
-              tauIa <= 0, will use double-exp approximation to power-law
-      tdmin = minimum time delay for SNIa [0.05]
-              for tauIa <= 0 MUST choose tdmin = 0.05 or 0.15
-      eta = outflow mass loading factor [0.3]
-      tauStar = SFE efficiency timescale [1.0]
-      tauSfh = e-folding timescale of SFH [8.0] 
-
-    Returns:
-      t, SFR, OH, MgH, FeH, OFe, and MgFe
-      each a 1-d array evaluated at the times in t
-      SFR is normalized to sum to 1.0, so for evenly spaced t it is the
-      fraction of stars formed in each bin
-
-    Time unit is Gyr
-    Reference: Weinberg, Andrews, & Freudenburg 2017, ApJ 837, 183
-               Particularly Appendix C
-    
+    :param np.ndarray tmod: Input time array (in Gyr) for model.
+        Should be output time array - star formation start time.
+    :param float tauSFE: SFE efficiency timescale [1.0]
+    :param float tauSFH1: Along with tauSFH2, determines the SFR of the form
+        SFR \propto (1-exp(-tmod/tau1))*exp(-tau2) [2.0]
+        (If tauSFH1 <= 0, then the model reverts to an exponentially declining SFH with tauSFH = tauSFH2)
+    :param float tauSFH2: Along with tauSFH1, determines the SFR of the form
+        SFR \propto (1-exp(-tmod/tau1))*exp(-tau2) [8.0]
+        (If tauSFH1 <= 0 and tauSFH2 <= 0, then the model reverts to a constant SFH)
+    :param float yOCC: IMF-averaged CCSN O yield [0.0071]
+    :param float yMgCC: IMF-averaged CCSN Mg yield [0.0007]
+    :param float yFeCC: IMF-averaged CCSN iron yield [0.0005]
+    :param float yFeIa: IMF-averaged SNIa iron yield over 10 Gyr [0.0007]
+    :param float fRetCC: Fraction of metals returned to the ISM by CCSNe [1.0]
+    :param float r: recycling fraction [0.4, based on Kroupa IMF]
+    :param float eta: outflow mass loading factor [0.3]
+    :param float tauIa: = e-folding time for SNIa DTD [1.5]
+        (Ignored if IaDTD_fn == 'powerlaw')
+    :param float tDminIa: minimum time delay for SNIa [0.15]
+        (If IaDTD_fn == 'powerlaw', then tDminIa must be either 0.05 or 0.15)
+    :param float SolarO: Solar O mass fraction [0.0073]
+    :param float SolarMg: Solar Mg mass fraction [0.0007]
+    :param float SolarFe: Solar iron mass fraction [0.0014]
+    :param IaDTD_fn: functional form of the SN Ia DTD ['powerlaw']
+        Must be either 'exponential' or 'powerlaw'
+    :return Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+        SFR, OH, MgH, FeH, OFe, MgFe --- each a 1-d array corresponding to the time array, tmod
+        (SFR is normalized such that for evenly spaced tmod, it is the fraction of stars formed in each time step.)
     """
-
-    import numpy as np
-    
-    tmax = t0 - tstart                        # maximum time
-    
-    tmod = np.arange(dtout, tmax+1.e-5,dtout) # fance() input time 
-    
-    t = tmod + tstart                         # actual time
-
-    # these near-unit multiplications will be used to ensure that timescales
-    # don't actually become equal to each other causing divide-by-zero errors
-    xfac=1.0013478
-    yfac=1.0016523
-
-    # For tauIa=0, use double-exponential that approximates t^{-1.1} power-law
-    # see WAF section 5.1 and Appx C for details
-    # In this case, we require tdmin=0.05 or tdmin=0.15
-    if (tauIa<0.01):
-        if (tdmin==0.15):
-            tauIa1=0.5
-            tauIa2=5.0
-            norm1=0.478
-            norm2=0.522
-        elif (tdmin==0.05):
-            tdmin=0.05
-            tauIa1=0.25
-            tauIa2=3.5
-            norm1=0.493
-            norm2=0.507
+    # Modulate Yields by Return Fraction
+    yOCC *= fRetCC
+    yMgCC *= fRetCC
+    yFeCC *= fRetCC
+    # Parse SFH Parameters & Run WAF models
+    if (tauSFH1 <= 0) and (tauSFH2 <= 0):
+        SFR, OH, MgH, FeH, OFe, MgFe = waf2017(
+            tmod=tmod,
+            tauSFE=tauSFE,
+            yOCC=yOCC,
+            yMgCC=yMgCC,
+            yFeCC=yFeCC,
+            yFeIa=yFeIa,
+            r=r,
+            eta=eta,
+            tauIa=tauIa,
+            tDminIa=tDminIa,
+            SolarO=SolarO,
+            SolarMg=SolarMg,
+            SolarFe=SolarFe,
+            SFH_fn="constant",
+            IaDTD_fn=IaDTD_fn,
+        )
+    elif (tauSFH1 <= 0) and (tauSFH2 > 0):
+        SFR, OH, MgH, FeH, OFe, MgFe = waf2017(
+            tmod=tmod,
+            tauSFE=tauSFE,
+            tauSFH=tauSFH2,
+            yOCC=yOCC,
+            yMgCC=yMgCC,
+            yFeCC=yFeCC,
+            yFeIa=yFeIa,
+            r=r,
+            eta=eta,
+            tauIa=tauIa,
+            tDminIa=tDminIa,
+            SolarO=SolarO,
+            SolarMg=SolarMg,
+            SolarFe=SolarFe,
+            SFH_fn="exponential",
+            IaDTD_fn=IaDTD_fn,
+        )
+    else:
+        # SFR = constant*[exp(-tmod/tau2)-exp(-tmod/tauh)], with tauh = (1/tau1+1/tau2)
+        # Evaluate each exponential term with waf2017() and combine, follow WAF Eq. 117
+        if tauSFH2 <= 0:
+            tauh = tauSFH1
+            SFR2, OH2, MgH2, FeH2, OFe2, MgFe2 = waf2017(
+                tmod=tmod,
+                tauSFE=tauSFE,
+                yOCC=yOCC,
+                yMgCC=yMgCC,
+                yFeCC=yFeCC,
+                yFeIa=yFeIa,
+                r=r,
+                eta=eta,
+                tauIa=tauIa,
+                tDminIa=tDminIa,
+                SolarO=SolarO,
+                SolarMg=SolarMg,
+                SolarFe=SolarFe,
+                SFH_fn="constant",
+                IaDTD_fn=IaDTD_fn,
+            )
+            SFR2 = np.ones_like(SFR2)
         else:
-            print ("can't set DTD parameters for this tdmin\n")
-            sys.exit()
-    # otherwise set normalization of second exponential to zero
-    else:
-        tauIa1=tauIa
-        tauIa2=tauIa
-        norm1=1.0
-        norm2=0.0
+            tauh = 1 / (1 / tauSFH1 + 1 / tauSFH2)
+            SFR2, OH2, MgH2, FeH2, OFe2, MgFe2 = waf2017(
+                tmod=tmod,
+                tauSFE=tauSFE,
+                tauSFH=tauSFH2,
+                yOCC=yOCC,
+                yMgCC=yMgCC,
+                yFeCC=yFeCC,
+                yFeIa=yFeIa,
+                r=r,
+                eta=eta,
+                tauIa=tauIa,
+                tDminIa=tDminIa,
+                SolarO=SolarO,
+                SolarMg=SolarMg,
+                SolarFe=SolarFe,
+                SFH_fn="exponential",
+                IaDTD_fn=IaDTD_fn,
+            )
+            SFR2 = np.exp(-tmod / tauSFH2)
+        SFRh, OHh, MgHh, FeHh, OFeh, MgFeh = waf2017(
+            tmod=tmod,
+            tauSFE=tauSFE,
+            tauSFH=tauh,
+            yOCC=yOCC,
+            yMgCC=yMgCC,
+            yFeCC=yFeCC,
+            yFeIa=yFeIa,
+            r=r,
+            eta=eta,
+            tauIa=tauIa,
+            tDminIa=tDminIa,
+            SolarO=SolarO,
+            SolarMg=SolarMg,
+            SolarFe=SolarFe,
+            SFH_fn="exponential",
+            IaDTD_fn=IaDTD_fn,
+        )
+        SFRh = -1 * np.exp(-tmod / tauh)
+        SFR = SFR2 + SFRh
+        # Convert to Linear Metallicity and Combine with WAF Eq. 117
+        ZO2 = SolarO * 10 ** OH2
+        ZMg2 = SolarMg * 10 ** MgH2
+        ZFe2 = SolarFe * 10 ** FeH2
+        ZOh = SolarO * 10 ** OHh
+        ZMgh = SolarMg * 10 ** MgHh
+        ZFeh = SolarFe * 10 ** FeHh
+        ZO = (SFR2 * ZO2 + SFRh * ZOh) / SFR
+        ZMg = (SFR2 * ZMg2 + SFRh * ZMgh) / SFR
+        ZFe = (SFR2 * ZFe2 + SFRh * ZFeh) / SFR
+        # Convert Back to Log Metallicity
+        OH = np.log10(ZO / SolarO)
+        MgH = np.log10(ZMg / SolarMg)
+        FeH = np.log10(ZFe / SolarFe)
+        OFe = OH - FeH
+        MgFe = MgH - FeH
+    # Normalize SFR
+    SFR /= np.sum(SFR)
+    return SFR, OH, MgH, FeH, OFe, MgFe
 
-    # compute harmonic difference timescales
-    tauStar*=xfac
-    tauSfh*=yfac
-    tauDep=tauStar/(1+eta-r)
-    tauDepIa1=1./(1./tauDep-1./tauIa1)
-    tauDepIa2=1./(1./tauDep-1./tauIa2)
-    if (tauSfh>0.0):
-        tauDepSfh=1./(1./tauDep-1./tauSfh)
-        tauIaSfh1=1./(1./tauIa1-1./tauSfh)
-        tauIaSfh2=1./(1./tauIa2-1./tauSfh)
-    else:
-        tauDepSfh=tauDep
-        tauIaSfh1=tauIa1
-        tauIaSfh2=tauIa2
-        tauSfh=1.e8
-
-    # compute equilibrium abundances, WAF equations 28-30
-    ZoEq=mocc*tauDepSfh/tauStar
-    ZmgEq=mmgcc*tauDepSfh/tauStar
-    ZfeccEq=mfecc*tauDepSfh/tauStar
-    ZfeIaEq1=norm1*mfeIa*((tauDepSfh/tauStar)*(tauIaSfh1/tauIa1)*
-                           np.exp(tdmin/tauSfh))
-    ZfeIaEq2=norm2*mfeIa*((tauDepSfh/tauStar)*(tauIaSfh2/tauIa2)*
-                           np.exp(tdmin/tauSfh))
-
-    # deltat rather than t enters for SNIa calculations
-    deltat=tmod-tdmin
-    # equations 56-58 of WAF
-    Zo=ZoEq*(1.-(tauDepSfh/tmod)*(1.-np.exp(-tmod/tauDepSfh)))
-    Zmg=Zo*ZmgEq/ZoEq
-    Zfecc=Zo*ZfeccEq/ZoEq
-    ZfeIa1=ZfeIaEq1*(tauIaSfh1/t)*(
-           deltat/tauIaSfh1 + 
-           (tauDepIa1/tauDepSfh)*np.exp(-deltat/tauIaSfh1) + 
-           (1.+(tauDepSfh/tauIaSfh1)-(tauDepIa1/tauDepSfh))*
-           np.exp(-deltat/tauDepSfh) -
-           (1.+(tauDepSfh/tauIaSfh1)) )
-    ZfeIa2=ZfeIaEq2*(tauIaSfh2/tmod)*(
-           deltat/tauIaSfh2 + 
-           (tauDepIa2/tauDepSfh)*np.exp(-deltat/tauIaSfh2) + 
-           (1.+(tauDepSfh/tauIaSfh2)-(tauDepIa2/tauDepSfh))*
-           np.exp(-deltat/tauDepSfh) -
-           (1.+(tauDepSfh/tauIaSfh2)) )
-
-    # zero SNIa contribution before tdmin    
-    ZfeIa1[tmod<tdmin]=0.
-    ZfeIa2[tmod<tdmin]=0.
-    Zfe=Zfecc+ZfeIa1+ZfeIa2  # sum iron contributions
-
-    sfr=np.ones(len(tmod))
-    if (tauSfh>0.0):
-        sfr=tmod*np.exp(-tmod/tauSfh)
-    sfrtot=sum(sfr)
-    sfr=sfr/sfrtot           # fraction of star formation per bin
-
-    # convert to [O/H], [Fe/H], [O/Fe]
-    OH=np.log10(Zo/SolarO)
-    MgH=np.log10(Zmg/SolarMg)
-    FeH=np.log10(Zfe/SolarFe)
-    OFe=OH-FeH
-    MgFe=MgH-FeH
-    return t, sfr,OH,MgH,FeH,OFe,MgFe
-
-def fance(tstart,t0,dtout,mocc,mmgcc,mfecc,fret,mfeIa,r,SolarO,SolarMg,SolarFe,tauIa,tdmin,eta,
-          tauStar,tau1,tau2):
-    """
-    Compute [O/H], [Mg/H], [Fe/H], [O/Fe] and [Mg/Fe] tracks using analytic model for rise-fall SFH
-
-    Input arguments (illustrative values in [  ]):
-      tstart = star formation start time [0.5]
-      t0 = age of universe at observed redshift [14]
-      dtout = output timestep [0.02]
-      mocc = IMF-averaged CCSN oxygen yield [0.0071]
-      mmgcc = IMF-averaged CCSN magnessium yield [0.0007] 
-      mfecc = IMF-averaged CCSN iron yield [0.0005]
-      mfeIa = IMF-averaged SNIa iron yield over 10 Gyr [0.0007]
-      r = recycling fraction [0.4, based on Kroupa IMF]
-      SolarO = solar oxygen mass fraction [0.0073]
-      SolarMg = solar magnessium mass fraction [0.0007]
-      SolarFe = solar iron mass fraction [0.0014]
-      tauIa = e-folding time for SNIa DTD [1.5]
-              tauIa <= 0, will use double-exp approximation to power-law
-      tdmin = minimum time delay for SNIa [0.05]
-              for tauIa <= 0 MUST choose tdmin = 0.05 or 0.15
-      eta = outflow mass loading factor [0.3]
-      tauStar = SFE efficiency timescale [1.0]
-      tau1, tau2 = parameters of rise-fall SFH [2.0, 8.0]
-                   SFR \propto (1-exp(-t/tau1))*exp(-tau2)
-                   tau1=0 -> pure exponential decline
-                   tau1=tau2=0 -> constant SFR
-    Returns:
-      t, SFR, OH, MgH, FeH, OFe, and MgFe
-      each a 1-d array evaluated at the times in t
-      SFR is normalized to sum to 1.0, so for evenly spaced t it is the
-      fraction of stars formed in each bin
-
-    Time unit is Gyr
-    
-    """
-
-    import numpy as np
-   
-    tmax = t0 - tstart                        # maximum time
-    
-    tmod = np.arange(dtout, tmax+1.e-5,dtout) # fance() input time 
-    
-    t = tmod + tstart                         # actual time
-
-    # fret < 1 is equivalent to reducing CCSN yield for the same eta
-    mocc*=fret
-    mmgcc*=fret
-    mfecc*=fret
-
-    if (tau1<=0):  # rise timescale = 0, so just exp with tauSfh=tau2
-        t,sfr,OH,MgH,FeH,OFe,MgFe=waf(tstart,t0,dtout,mocc,mmgcc,mfecc,mfeIa,r,SolarO,SolarMg,SolarFe,tauIa,tdmin,eta,tauStar,tau2)
-    
-    else:
-        
-        """
-        For tau1>0, the SFH can be written as 
-        SFR = constant*[exp(-t/tau2)-exp(-t/tauh)], with tauh = (1/tau1+1/tau2).
-        The exponential cases follow WAF, and they can be combined using WAF
-        equation (117), even though the second exponential has a negative 
-        pre-factor.
-        """
-
-        if (tau2<=0):
-            tauh=tau1
-        else:
-            tauh=1/(1/tau1 + 1/tau2)
-
-        t,sfr1,OH1,MgH1,FeH1,OFe1,MgFe1=waf(tstart,t0,dtout,mocc,mmgcc,mfecc,mfeIa,r,SolarO,SolarMg,SolarFe,tauIa,tdmin,
-                           eta,tauStar,tau2)
-        t,sfr2,OH2,MgH2,FeH2,OFe2,MgFe2=waf(tstart,t0,dtout,mocc,mmgcc,mfecc,mfeIa,r,SolarO,SolarMg,SolarFe,tauIa,tdmin,
-                           eta,tauStar,tauh)
-
-        # returned sfr arrays are separately normalized, so we need to recompute
-        if (tau2<=0):
-            sfr1=np.ones(len(tmod))  # constant SFR
-        else:
-            sfr1=np.exp(-tmod/tau2)
-        sfr2= -1.*np.exp(-tmod/tauh) # note negative pre-factor
-        sfr=sfr1+sfr2
-
-    # Now we use WAF eq. 117, but we need to convert to linear metallicity
-        Zo1= SolarO*(10**OH1)
-        Zmg1=SolarMg*(10**MgH1)
-        Zfe1=SolarFe*(10**FeH1)
-        Zo2= SolarO*(10**OH2)
-        Zmg2=SolarMg*(10**MgH2)
-        Zfe2=SolarFe*(10**FeH2)
-        Zo=  (sfr1*Zo1+sfr2*Zo2)/sfr
-        Zmg= (sfr1*Zmg1+sfr2*Zmg2)/sfr
-        Zfe= (sfr1*Zfe1+sfr2*Zfe2)/sfr
-
-    # convert back to log quantities and return
-        OH=np.log10(Zo/SolarO)
-        MgH=np.log10(Zmg/SolarMg)
-        FeH=np.log10(Zfe/SolarFe)
-        OFe=OH-FeH
-        MgFe=MgH-FeH
-
-    # normalize sfr
-        sfrtot=sum(sfr)
-        sfr=sfr/sfrtot            # fraction of star formation per bin
-
-    return t,sfr,OH,MgH,FeH,OFe,MgFe
-
-def mdf(xmin,xmax,dx,xh,sfr):
-    import numpy as np
-
-    x=np.arange(xmin,xmax,dx)
-    y=np.zeros(len(x))
-    for i in np.arange(len(xh)):
-    # which metallicity bin does this timestep fall into?
-        ibin=np.int((xh[i]-xmin)/dx+0.5)
-    # values outside range are added to first or last bin
-        ibin=np.clip(ibin,0,len(x)-1)
-        # add to mdf a quantity proportional to stars formed in that time bin
-        y[ibin]+=sfr[i]	
-    # normalize to unit integral
-    y=y/(np.sum(y)*dx)
-    # return bin centers instead of bin lower boundaries
-    x+=dx/2.
-    return x,y

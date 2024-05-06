@@ -1,58 +1,157 @@
-'''
-fanCE default parameters
-These parameters describe the reference model in Gountanis et al. 2024
-All timescales are given in Gyr
-'''
+import numpy as np
 
-tstart=0.5              # star formation start time
-t0=14.0                 # age of universe at observed redshift
-dtout=0.02              # output timestep
+SolarO = 0.00733
+SolarMg = 0.000671
+SolarFe = 0.00137
 
-tauStar=1               # star formation efficiency timescale
-eta=0.3                 # outflow mass loading factor
-r=0.4                   # recyling fraction
-fret=1.0                # CCSN retention factor (1-fret is direct loss)
+aFeCC = 0.45
+aFeEq = 0.05
+yOCC = 0.973 * SolarO * (0.00137 / SolarFe) * (10**(aFeCC-0.45))
+yFeCC = yOCC * (SolarFe / SolarO) * (10**(-aFeCC))
+yMgCC = yOCC * SolarMg / SolarO
+yFeIa = yFeCC * (10.**(aFeCC - aFeEq) - 1.)
 
-'''
-The SFR is proportional to (1-e^{-t/tau1})*e^{-t/tau2}.
-For typical choices, this rises linearly on a timescale tau1 and then falls
-exponentially on a timescale tau2.
-tau1=0 is an acceptable limit.
-tau2=0 is interpreted as tau2=infinity.
-tau1=tau2=0 is a constant SFR. 
-'''
-tau1=2                  # rise timescale
-tau2=8                  # fall timescale
 
-'''
-SNIa DTD parameters
-tauIa=0 is interpreted as a double exponential instead of a single. 
-If tauIa=0, MUST choose tdmin=0.05 or 0.15.
-'''
-tauIa=0                 # e-folding time for SNIa exponential DTD
-tdmin=0.15              # minimum time delay for SNIa
+class DefaultWAFParSet:
+    def __init__(
+        self,
+    ):
+        self.tauSFE = 1.0
+        self.tauSFH = 8.0
+        self.yOCC = yOCC
+        self.yMgCC = yMgCC
+        self.yFeCC = yFeCC
+        self.yFeIa = yFeIa
+        self.r = 0.4
+        self.eta = 0.3
+        self.tauIa = 1.5
+        self.tDminIa = 0.05
+        self.SolarO = SolarO
+        self.SolarMg = SolarMg
+        self.SolarFe = SolarFe
+        self.SFH_fn = 'exponential'
+        self.IaDTD_fn = 'powerlaw'
+        self.t_start = 0.5
+        self.t0 = 14.0
+        self.dt = 0.02
+        self.tmod = np.arange(self.dt, self.t0 - self.t_start + self.dt, self.dt)
+        self.t = self.tmod + self.t_start
+        self.model_kwargs = dict(
+            tauSFE=self.tauSFE,
+            tauSFH=self.tauSFH,
+            yOCC=self.yOCC,
+            yMgCC=self.yMgCC,
+            yFeCC=self.yFeCC,
+            yFeIa=self.yFeIa,
+            r=self.r,
+            eta=self.eta,
+            tauIa=self.tauIa,
+            tDminIa=self.tDminIa,
+            SolarO=self.SolarO,
+            SolarMg=self.SolarMg,
+            SolarFe=self.SolarFe,
+            SFH_fn=self.SFH_fn,
+            IaDTD_fn=self.IaDTD_fn,
+            tmod=self.tmod,
+        )
 
-'''
-Solar abundances by mass
-Based on Magg et al. (2022) Table 5 + 0.04 dex to correct for diffusion
-'''
-SolarO=7.33e-3
-SolarMg=6.71e-4
-SolarFe=1.37e-3
+    def update(self, p):
+        for p_name, p_val in p.items():
+            if p_name[:3] == 'log':
+                setattr(self, p_name[3:], 10 ** p_val)
+            else:
+                setattr(self, p_name, p_val)
+        self.tmod = np.arange(self.dt, self.t0 - self.t_start + self.dt, self.dt)
+        self.t = self.tmod + self.t_start
+        self.model_kwargs = dict(
+            tauSFE=self.tauSFE,
+            tauSFH=self.tauSFH,
+            yOCC=self.yOCC,
+            yMgCC=self.yMgCC,
+            yFeCC=self.yFeCC,
+            yFeIa=self.yFeIa,
+            r=self.r,
+            eta=self.eta,
+            tauIa=self.tauIa,
+            tDminIa=self.tDminIa,
+            SolarO=self.SolarO,
+            SolarMg=self.SolarMg,
+            SolarFe=self.SolarFe,
+            SFH_fn=self.SFH_fn,
+            IaDTD_fn=self.IaDTD_fn,
+            tmod=self.tmod,
+        )
 
-'''
-IMF-averaged CCSN yields
-The yield calibration is based on Weinberg++ 2023, eq. 11
-'''
-afecc=0.45              # plateau value for [alpha/Fe]
 
-mocc=0.973*SolarO*(0.00137/SolarFe)*(10**(afecc-0.45))  # CCSN oxygen
-mfecc=mocc*(SolarFe/SolarO)*(10**(-afecc))              # CCSN iron
-mmgcc=mocc*SolarMg/SolarO                               # CCSN magnesium
+class DefaultfanCEParSet:
+    def __init__(
+        self,
+    ):
+        self.tauSFE = 1.0
+        self.tauSFH1 = 2.0
+        self.tauSFH2 = 8.0
+        self.fRetCC = 1.0
+        self.yOCC = yOCC
+        self.yMgCC = yMgCC
+        self.yFeCC = yFeCC
+        self.yFeIa = yFeIa
+        self.r = 0.4
+        self.eta = 0.3
+        self.tauIa = 1.5
+        self.tDminIa = 0.15
+        self.SolarO = SolarO
+        self.SolarMg = SolarMg
+        self.SolarFe = SolarFe
+        self.IaDTD_fn = 'powerlaw'
+        self.t_start = 0.5
+        self.t0 = 14.0
+        self.dt = 0.02
+        self.tmod = np.arange(self.dt, self.t0 - self.t_start + self.dt, self.dt)
+        self.t = self.tmod + self.t_start
+        self.model_kwargs = dict(
+            tauSFE=self.tauSFE,
+            tauSFH1=self.tauSFH1,
+            tauSFH2=self.tauSFH2,
+            fRetCC=self.fRetCC,
+            yOCC=self.yOCC,
+            yMgCC=self.yMgCC,
+            yFeCC=self.yFeCC,
+            yFeIa=self.yFeIa,
+            r=self.r,
+            eta=self.eta,
+            tauIa=self.tauIa,
+            tDminIa=self.tDminIa,
+            SolarO=self.SolarO,
+            SolarMg=self.SolarMg,
+            SolarFe=self.SolarFe,
+            IaDTD_fn=self.IaDTD_fn,
+            tmod=self.tmod,
+        )
 
-'''
-Population averaged SNIa Fe yield
-Will evolve to afeeq at late times when integrated to t=infity for a constant SFR
-'''
-afeeq=0.05
-mfeIa=mfecc*(10.**(afecc-afeeq) - 1.)
+    def update(self, p):
+        for p_name, p_val in p.items():
+            if p_name[:3] == 'log':
+                setattr(self, p_name[3:], 10 ** p_val)
+            else:
+                setattr(self, p_name, p_val)
+        self.tmod = np.arange(self.dt, self.t0 - self.t_start + self.dt, self.dt)
+        self.t = self.tmod + self.t_start
+        self.model_kwargs = dict(
+            tauSFE=self.tauSFE,
+            tauSFH1=self.tauSFH1,
+            tauSFH2=self.tauSFH2,
+            fRetCC=self.fRetCC,
+            yOCC=self.yOCC,
+            yMgCC=self.yMgCC,
+            yFeCC=self.yFeCC,
+            yFeIa=self.yFeIa,
+            r=self.r,
+            eta=self.eta,
+            tauIa=self.tauIa,
+            tDminIa=self.tDminIa,
+            SolarO=self.SolarO,
+            SolarMg=self.SolarMg,
+            SolarFe=self.SolarFe,
+            IaDTD_fn=self.IaDTD_fn,
+            tmod=self.tmod,
+        )
