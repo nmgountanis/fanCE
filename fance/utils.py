@@ -37,4 +37,7 @@ def weight_stellar_props(
     # light-/mass-weighted, log-averaged age
     mean_age = 10**(np.cumsum(np.log10(t0 - t + 1e-5) * sfr * weights) / np.cumsum(sfr * weights))
     return mean_age, OHStar, MgHStar, FeHStar, OFeStar, MgFeStar
-     
+
+
+def add_burst():
+    raise NotImplementedError
