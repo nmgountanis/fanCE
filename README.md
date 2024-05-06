@@ -18,11 +18,9 @@ The source code for fanCE can be downloaded from GitHub and installed by running
 
 ## Authors
 - Nicole Gountanis (gountanis.1@buckeyemail.osu.edu)
-
-## Collaborators
+- Nathan Sandford
 - David Weinberg
 - Aliza Beverage
-- Nathan Sandford
 
 ## Liscense & Attribution
 Copyright 2024 Nicole Gountanis and contributors.
