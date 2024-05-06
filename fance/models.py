@@ -16,10 +16,10 @@ def waf2017(
     SolarO: float = 0.0073,
     SolarMg: float = 0.0007,
     SolarFe: float = 0.0014,
-    SFH_fn: str = 'exponential',
-    IaDTD_fn: str = 'powerlaw',
+    SFH_fn: str = "exponential",
+    IaDTD_fn: str = "powerlaw",
 ):
-    '''
+    """
     Compute [O/H], [Mg/H], [Fe/H], [O/Fe] and [Mg/Fe] tracks using WAF analytic model for a constant,
     exponentially declining, or linear-exponential SFR.
     Reference: Weinberg, Andrews, & Freudenburg 2017, ApJ 837, 183 (Particularly Appendix C)
@@ -49,17 +49,17 @@ def waf2017(
     :return Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         SFR, OH, MgH, FeH, OFe, MgFe --- each a 1-d array corresponding to the time array, tmod
         (SFR is normalized such that for evenly spaced tmod, it is the fraction of stars formed in each time step.)
-    '''
+    """
     # Prophylactically preventing divide-by-zero errors
     xfac = 1.0013478
     yfac = 1.0016523
     # Parse Ia DTD
-    if IaDTD_fn == 'exponential':
+    if IaDTD_fn == "exponential":
         tauIa1 = tauIa
         tauIa2 = tauIa
         Ia_norm1 = 1.0
         Ia_norm2 = 0.0
-    elif IaDTD_fn == 'powerlaw':
+    elif IaDTD_fn == "powerlaw":
         if tDminIa == 0.05:
             tauIa1 = 0.25
             tauIa2 = 3.5
@@ -71,58 +71,86 @@ def waf2017(
             Ia_norm1 = 0.478
             Ia_norm2 = 0.522
         else:
-            RuntimeError("tDminIa must be either 0.05 or 0.15 if IaDTD_fn == 'powerlaw' ")
+            RuntimeError(
+                "tDminIa must be either 0.05 or 0.15 if IaDTD_fn == 'powerlaw' "
+            )
     else:
         raise RuntimeError("IaDTD_fn must be either 'exponential' or 'powerlaw' ")
     # Compute "Harmonic Difference" Timescales
     tauSFE *= xfac
     tauSFH *= yfac
     tauDep = tauSFE / (1 + eta - r)
-    tauDepIa1 = 1. / (1. / tauDep - 1. / tauIa1)
-    tauDepIa2 = 1. / (1. / tauDep - 1. / tauIa2)
-    if SFH_fn == 'constant':
+    tauDepIa1 = 1.0 / (1.0 / tauDep - 1.0 / tauIa1)
+    tauDepIa2 = 1.0 / (1.0 / tauDep - 1.0 / tauIa2)
+    if SFH_fn == "constant":
         tauDepSFH = tauDep
         tauIaSFH1 = tauIa1
         tauIaSFH2 = tauIa2
         tauSFH = 1e8
-    elif SFH_fn in ['exponential', 'linexp']:
-        tauDepSFH = 1. / (1. / tauDep - 1. / tauSFH)
-        tauIaSFH1 = 1. / (1. / tauIa1 - 1. / tauSFH)
-        tauIaSFH2 = 1. / (1. / tauIa2 - 1. / tauSFH)
+    elif SFH_fn in ["exponential", "linexp"]:
+        tauDepSFH = 1.0 / (1.0 / tauDep - 1.0 / tauSFH)
+        tauIaSFH1 = 1.0 / (1.0 / tauIa1 - 1.0 / tauSFH)
+        tauIaSFH2 = 1.0 / (1.0 / tauIa2 - 1.0 / tauSFH)
     else:
         RuntimeError("SFH_fn must be one of 'constant', 'exponential', or 'linexp' ")
     # Compute equilibrium abundances, WAF equations 28-30
     ZOEq = yOCC * tauDepSFH / tauSFE
     ZMgEq = yMgCC * tauDepSFH / tauSFE
     ZFeCCEq = yFeCC * tauDepSFH / tauSFE
-    ZFeIaEq1 = Ia_norm1 * yFeIa * ((tauDepSFH / tauSFE) * (tauIaSFH1 / tauIa1) * np.exp(tDminIa / tauSFH))
-    ZFeIaEq2 = Ia_norm2 * yFeIa * ((tauDepSFH / tauSFE) * (tauIaSFH2 / tauIa2) * np.exp(tDminIa / tauSFH))
+    ZFeIaEq1 = (
+        Ia_norm1
+        * yFeIa
+        * ((tauDepSFH / tauSFE) * (tauIaSFH1 / tauIa1) * np.exp(tDminIa / tauSFH))
+    )
+    ZFeIaEq2 = (
+        Ia_norm2
+        * yFeIa
+        * ((tauDepSFH / tauSFE) * (tauIaSFH2 / tauIa2) * np.exp(tDminIa / tauSFH))
+    )
     # Compute non-equilibrium abundances
-    if SFH_fn in ['constant', 'exponential']:  # WAF equations 50, 52, and 53
+    if SFH_fn in ["constant", "exponential"]:  # WAF equations 50, 52, and 53
         delta_t = tmod - tDminIa
-        ZO = ZOEq * (1. - np.exp(-tmod / tauDepSFH))
-        ZMg = ZMgEq * (1. - np.exp(-tmod / tauDepSFH))
+        ZO = ZOEq * (1.0 - np.exp(-tmod / tauDepSFH))
+        ZMg = ZMgEq * (1.0 - np.exp(-tmod / tauDepSFH))
         ZFeCC = ZO * ZFeCCEq / ZOEq
-        ZFeIa1 = ZFeIaEq1 * (1. - np.exp(-delta_t / tauDepSFH) - (tauDepIa1 / tauDepSFH) * (
-                    np.exp(-delta_t / tauIaSFH1) - np.exp(-delta_t / tauDepSFH)))
-        ZFeIa2 = ZFeIaEq2 * (1. - np.exp(-delta_t / tauDepSFH) - (tauDepIa2 / tauDepSFH) * (
-                    np.exp(-delta_t / tauIaSFH2) - np.exp(-delta_t / tauDepSFH)))
-    elif SFH_fn == 'linexp':  # WAF equations 56-58
+        ZFeIa1 = ZFeIaEq1 * (
+            1.0
+            - np.exp(-delta_t / tauDepSFH)
+            - (tauDepIa1 / tauDepSFH)
+            * (np.exp(-delta_t / tauIaSFH1) - np.exp(-delta_t / tauDepSFH))
+        )
+        ZFeIa2 = ZFeIaEq2 * (
+            1.0
+            - np.exp(-delta_t / tauDepSFH)
+            - (tauDepIa2 / tauDepSFH)
+            * (np.exp(-delta_t / tauIaSFH2) - np.exp(-delta_t / tauDepSFH))
+        )
+    elif SFH_fn == "linexp":  # WAF equations 56-58
         delta_t = tmod - tDminIa
-        ZO = ZOEq * (1. - (tauDepSFH / tmod) * (1. - np.exp(-tmod / tauDepSFH)))
-        ZMg = ZMgEq * (1. - (tauDepSFH / tmod) * (1. - np.exp(-tmod / tauDepSFH)))
+        ZO = ZOEq * (1.0 - (tauDepSFH / tmod) * (1.0 - np.exp(-tmod / tauDepSFH)))
+        ZMg = ZMgEq * (1.0 - (tauDepSFH / tmod) * (1.0 - np.exp(-tmod / tauDepSFH)))
         ZFeCC = ZO * ZFeCCEq / ZOEq
-        ZFeIa1 = ZFeIaEq1 * (tauIaSFH1 / tmod) * (
+        ZFeIa1 = (
+            ZFeIaEq1
+            * (tauIaSFH1 / tmod)
+            * (
                 delta_t / tauIaSFH1
                 + (tauDepIa1 / tauDepSFH) * np.exp(-delta_t / tauIaSFH1)
-                + (1. + (tauDepSFH / tauIaSFH1) - (tauDepIa1 / tauDepSFH)) * np.exp(-delta_t / tauDepSFH)
-                - (1. + (tauDepSFH / tauIaSFH1))
+                + (1.0 + (tauDepSFH / tauIaSFH1) - (tauDepIa1 / tauDepSFH))
+                * np.exp(-delta_t / tauDepSFH)
+                - (1.0 + (tauDepSFH / tauIaSFH1))
+            )
         )
-        ZFeIa2 = ZFeIaEq2 * (tauIaSFH2 / tmod) * (
+        ZFeIa2 = (
+            ZFeIaEq2
+            * (tauIaSFH2 / tmod)
+            * (
                 delta_t / tauIaSFH2
                 + (tauDepIa2 / tauDepSFH) * np.exp(-delta_t / tauIaSFH2)
-                + (1. + (tauDepSFH / tauIaSFH2) - (tauDepIa2 / tauDepSFH)) * np.exp(-delta_t / tauDepSFH)
-                - (1. + (tauDepSFH / tauIaSFH2))
+                + (1.0 + (tauDepSFH / tauIaSFH2) - (tauDepIa2 / tauDepSFH))
+                * np.exp(-delta_t / tauDepSFH)
+                - (1.0 + (tauDepSFH / tauIaSFH2))
+            )
         )
     else:
         RuntimeError("SFH_fn must be one of 'constant', 'exponential', or 'linexp' ")
@@ -130,11 +158,11 @@ def waf2017(
     ZFeIa2[tmod < tDminIa] = 0
     ZFe = ZFeCC + ZFeIa1 + ZFeIa2
     # Compute SFR
-    if SFH_fn == 'constant':
+    if SFH_fn == "constant":
         SFR = np.ones_like(tmod)
-    elif SFH_fn == 'exponential':
+    elif SFH_fn == "exponential":
         SFR = np.exp(-tmod / tauSFH)
-    elif SFH_fn == 'linexp':
+    elif SFH_fn == "linexp":
         SFR = tmod * np.exp(-tmod / tauSFH)
     else:
         RuntimeError("SFH_fn must be one of 'constant', 'exponential', or 'linexp' ")
@@ -165,9 +193,9 @@ def fance(
     SolarO: float = 0.0073,
     SolarMg: float = 0.0007,
     SolarFe: float = 0.0014,
-    IaDTD_fn: str = 'exponential',
+    IaDTD_fn: str = "exponential",
 ):
-    '''
+    """
     Compute [O/H], [Mg/H], [Fe/H], [O/Fe] and [Mg/Fe] tracks using WAF analytic model for a rise-fall SFR.
     Reference: Weinberg, Andrews, & Freudenburg 2017, ApJ 837, 183 (Particularly Appendix C)
 
@@ -199,7 +227,7 @@ def fance(
     :return Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         SFR, OH, MgH, FeH, OFe, MgFe --- each a 1-d array corresponding to the time array, tmod
         (SFR is normalized such that for evenly spaced tmod, it is the fraction of stars formed in each time step.)
-    '''
+    """
     # Modulate Yields by Return Fraction
     yOCC *= fRetCC
     yMgCC *= fRetCC
@@ -220,7 +248,7 @@ def fance(
             SolarO=SolarO,
             SolarMg=SolarMg,
             SolarFe=SolarFe,
-            SFH_fn='constant',
+            SFH_fn="constant",
             IaDTD_fn=IaDTD_fn,
         )
     elif (tauSFH1 <= 0) and (tauSFH2 > 0):
@@ -239,7 +267,7 @@ def fance(
             SolarO=SolarO,
             SolarMg=SolarMg,
             SolarFe=SolarFe,
-            SFH_fn='exponential',
+            SFH_fn="exponential",
             IaDTD_fn=IaDTD_fn,
         )
     else:
@@ -261,12 +289,12 @@ def fance(
                 SolarO=SolarO,
                 SolarMg=SolarMg,
                 SolarFe=SolarFe,
-                SFH_fn='constant',
+                SFH_fn="constant",
                 IaDTD_fn=IaDTD_fn,
             )
             SFR2 = np.ones_like(SFR2)
         else:
-            tauh = 1/(1/tauSFH1 + 1/tauSFH2)
+            tauh = 1 / (1 / tauSFH1 + 1 / tauSFH2)
             SFR2, OH2, MgH2, FeH2, OFe2, MgFe2 = waf2017(
                 tmod=tmod,
                 tauSFE=tauSFE,
@@ -282,7 +310,7 @@ def fance(
                 SolarO=SolarO,
                 SolarMg=SolarMg,
                 SolarFe=SolarFe,
-                SFH_fn='exponential',
+                SFH_fn="exponential",
                 IaDTD_fn=IaDTD_fn,
             )
             SFR2 = np.exp(-tmod / tauSFH2)
@@ -301,18 +329,18 @@ def fance(
             SolarO=SolarO,
             SolarMg=SolarMg,
             SolarFe=SolarFe,
-            SFH_fn='exponential',
+            SFH_fn="exponential",
             IaDTD_fn=IaDTD_fn,
         )
         SFRh = -1 * np.exp(-tmod / tauh)
         SFR = SFR2 + SFRh
         # Convert to Linear Metallicity and Combine with WAF Eq. 117
-        ZO2 = SolarO * 10**OH2
-        ZMg2 = SolarMg * 10**MgH2
-        ZFe2 = SolarFe * 10**FeH2
-        ZOh = SolarO * 10**OHh
-        ZMgh = SolarMg * 10**MgHh
-        ZFeh = SolarFe * 10**FeHh
+        ZO2 = SolarO * 10 ** OH2
+        ZMg2 = SolarMg * 10 ** MgH2
+        ZFe2 = SolarFe * 10 ** FeH2
+        ZOh = SolarO * 10 ** OHh
+        ZMgh = SolarMg * 10 ** MgHh
+        ZFeh = SolarFe * 10 ** FeHh
         ZO = (SFR2 * ZO2 + SFRh * ZOh) / SFR
         ZMg = (SFR2 * ZMg2 + SFRh * ZMgh) / SFR
         ZFe = (SFR2 * ZFe2 + SFRh * ZFeh) / SFR
@@ -326,19 +354,3 @@ def fance(
     SFR /= np.sum(SFR)
     return SFR, OH, MgH, FeH, OFe, MgFe
 
-
-def mdf(xmin, xmax, dx, xh, sfr):
-    x = np.arange(xmin, xmax, dx)
-    y = np.zeros_like(x)
-    for i in np.arange(len(xh)):
-        # which metallicity bin does this timestep fall into?
-        ibin = np.int((xh[i] - xmin) / dx + 0.5)
-        # values outside range are added to first or last bin
-        ibin = np.clip(ibin, 0, len(x) - 1)
-        # add to mdf a quantity proportional to stars formed in that time bin
-        y[ibin] += sfr[i]
-    # normalize to unit integral
-    y = y / (np.sum(y) * dx)
-    # return bin centers instead of bin lower boundaries
-    x += dx / 2.
-    return x, y
