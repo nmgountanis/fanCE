@@ -34,53 +34,6 @@ class DefaultWAFParSet:
         self.t_start = 0.5
         self.t0 = 14.0
         self.dt = 0.02
-        self.tmod = np.arange(self.dt, self.t0 - self.t_start + self.dt, self.dt)
-        self.t = self.tmod + self.t_start
-        self.model_kwargs = dict(
-            tauSFE=self.tauSFE,
-            tauSFH=self.tauSFH,
-            yOCC=self.yOCC,
-            yMgCC=self.yMgCC,
-            yFeCC=self.yFeCC,
-            yFeIa=self.yFeIa,
-            r=self.r,
-            eta=self.eta,
-            tauIa=self.tauIa,
-            tDminIa=self.tDminIa,
-            SolarO=self.SolarO,
-            SolarMg=self.SolarMg,
-            SolarFe=self.SolarFe,
-            SFH_fn=self.SFH_fn,
-            IaDTD_fn=self.IaDTD_fn,
-            tmod=self.tmod,
-        )
-
-    def update(self, p):
-        for p_name, p_val in p.items():
-            if p_name[:3] == 'log':
-                setattr(self, p_name[3:], 10 ** p_val)
-            else:
-                setattr(self, p_name, p_val)
-        self.tmod = np.arange(self.dt, self.t0 - self.t_start + self.dt, self.dt)
-        self.t = self.tmod + self.t_start
-        self.model_kwargs = dict(
-            tauSFE=self.tauSFE,
-            tauSFH=self.tauSFH,
-            yOCC=self.yOCC,
-            yMgCC=self.yMgCC,
-            yFeCC=self.yFeCC,
-            yFeIa=self.yFeIa,
-            r=self.r,
-            eta=self.eta,
-            tauIa=self.tauIa,
-            tDminIa=self.tDminIa,
-            SolarO=self.SolarO,
-            SolarMg=self.SolarMg,
-            SolarFe=self.SolarFe,
-            SFH_fn=self.SFH_fn,
-            IaDTD_fn=self.IaDTD_fn,
-            tmod=self.tmod,
-        )
 
 
 class DefaultfanCEParSet:
@@ -106,52 +59,3 @@ class DefaultfanCEParSet:
         self.t_start = 0.5
         self.t0 = 14.0
         self.dt = 0.02
-        self.tmod = np.arange(self.dt, self.t0 - self.t_start + self.dt, self.dt)
-        self.t = self.tmod + self.t_start
-        self.model_kwargs = dict(
-            tauSFE=self.tauSFE,
-            tauSFH1=self.tauSFH1,
-            tauSFH2=self.tauSFH2,
-            fRetCC=self.fRetCC,
-            yOCC=self.yOCC,
-            yMgCC=self.yMgCC,
-            yFeCC=self.yFeCC,
-            yFeIa=self.yFeIa,
-            r=self.r,
-            eta=self.eta,
-            tauIa=self.tauIa,
-            tDminIa=self.tDminIa,
-            SolarO=self.SolarO,
-            SolarMg=self.SolarMg,
-            SolarFe=self.SolarFe,
-            IaDTD_fn=self.IaDTD_fn,
-            tmod=self.tmod,
-        )
-
-    def update(self, p):
-        for p_name, p_val in p.items():
-            if p_name[:3] == 'log':
-                setattr(self, p_name[3:], 10 ** p_val)
-            else:
-                setattr(self, p_name, p_val)
-        self.tmod = np.arange(self.dt, self.t0 - self.t_start + self.dt, self.dt)
-        self.t = self.tmod + self.t_start
-        self.model_kwargs = dict(
-            tauSFE=self.tauSFE,
-            tauSFH1=self.tauSFH1,
-            tauSFH2=self.tauSFH2,
-            fRetCC=self.fRetCC,
-            yOCC=self.yOCC,
-            yMgCC=self.yMgCC,
-            yFeCC=self.yFeCC,
-            yFeIa=self.yFeIa,
-            r=self.r,
-            eta=self.eta,
-            tauIa=self.tauIa,
-            tDminIa=self.tDminIa,
-            SolarO=self.SolarO,
-            SolarMg=self.SolarMg,
-            SolarFe=self.SolarFe,
-            IaDTD_fn=self.IaDTD_fn,
-            tmod=self.tmod,
-        )
