@@ -177,6 +177,7 @@ def waf2017(
 
 
 def fance(
+    aFeCC: float = 0.45,
     tauSFE: float = 1.0,
     tauSFH1: float = 2.0,
     tauSFH2: float = 8.0,
@@ -239,6 +240,21 @@ def fance(
     # Define t used for plotting
     t = tmod + t_start
 
+    # Set the Yields (CC and Ia) by CC plateu defined by user (aFeCC)
+    # Followig eq. 17 (?) in Weinberg++23
+    SolarO = 0.00733
+    SolarMg = 0.000671
+    SolarFe = 0.00137
+    aFeEq = 0.0 # late time evolution equilibrium [a/fe]
+    yOCC = 0.973 * SolarO * (0.00137 / SolarFe) * (10**(aFeCC-0.45))
+    yFeCC = yOCC * (SolarFe / SolarO) * (10**(-aFeCC))
+    yMgCC = yOCC * SolarMg / SolarO
+
+    delta = aFeCC - aFeEq
+    mu = 1.1
+    yFeIa = yFeCC * (10.**(delta) - 1.) / mu
+    
+    
     # Modulate Yields by Return Fraction
     yOCC *= fRetCC
     yMgCC *= fRetCC
