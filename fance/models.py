@@ -177,7 +177,9 @@ def waf2017(
 
 
 def fance(
-    aFeCC: float = 0.45,
+    t_start: float = 0.5,
+    t0: float = 14.0,
+    dt: float = 0.02,
     tauSFE: float = 1.0,
     tauSFH1: float = 2.0,
     tauSFH2: float = 8.0,
@@ -185,6 +187,8 @@ def fance(
     yMgCC: float = 0.0007,
     yFeCC: float = 0.0005,
     yFeIa: float = 0.0007,
+    aFeCC: float = 0.45,
+    mu: float = 1.1,
     fRetCC: float = 1.0,
     r: float = 0.4,
     eta: float = 0.3,
@@ -194,17 +198,15 @@ def fance(
     SolarMg: float = 0.0007,
     SolarFe: float = 0.0014,
     IaDTD_fn: str = "exponential",
-    t_start: float = 0.5,
-    t0: float = 14.0,
-    dt: float = 0.02,
 ):
     
     """
     Compute [O/H], [Mg/H], [Fe/H], [O/Fe] and [Mg/Fe] tracks using WAF analytic model for a rise-fall SFR.
     Reference: Weinberg, Andrews, & Freudenburg 2017, ApJ 837, 183 (Particularly Appendix C)
 
-    :param np.ndarray tmod: Input time array (in Gyr) for model.
-        Should be output time array - star formation start time.
+    :param float t_start: start of star-formation (Gyr) [0.5]
+    :param float t0: end time (Gyr) [14.0]
+    :param float dt: time step (Gyr) [0.02]
     :param float tauSFE: SFE efficiency timescale [1.0]
     :param float tauSFH1: Along with tauSFH2, determines the SFR of the form
         SFR \propto (1-exp(-tmod/tau1))*exp(-tau2) [2.0]
@@ -240,18 +242,14 @@ def fance(
     # Define t used for plotting
     t = tmod + t_start
 
-    # Set the Yields (CC and Ia) by CC plateu defined by user (aFeCC)
+    # Set the Ia yield using CC plateu defined by user (aFeCC)
     # Followig eq. 17 (?) in Weinberg++23
-    SolarO = 0.00733
-    SolarMg = 0.000671
-    SolarFe = 0.00137
     aFeEq = 0.0 # late time evolution equilibrium [a/fe]
     yOCC = 0.973 * SolarO * (0.00137 / SolarFe) * (10**(aFeCC-0.45))
     yFeCC = yOCC * (SolarFe / SolarO) * (10**(-aFeCC))
     yMgCC = yOCC * SolarMg / SolarO
-
     delta = aFeCC - aFeEq
-    mu = 1.1
+
     yFeIa = yFeCC * (10.**(delta) - 1.) / mu
     
     
