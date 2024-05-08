@@ -1,68 +1,49 @@
 import numpy as np
 
-SolarO = 0.00733
-SolarMg = 0.000671
-SolarFe = 0.00137
+def DefaultWAFParSet(dt=0.02, t0=14, t_start=0.5):
+    tmod = np.arange(dt, t0 - t_start + dt, dt)
 
-aFeCC = 0.45
-aFeEq = 0.0
-yOCC = 0.973 * SolarO * (0.00137 / SolarFe) * (10**(aFeCC-0.45))
-yFeCC = yOCC * (SolarFe / SolarO) * (10**(-aFeCC))
-yMgCC = yOCC * SolarMg / SolarO
+    return {
+        'tmod': tmod, 
+        'tauSFE': 1.0,
+        'tauSFH': 8.0,
+        'yOCC': 0.0071,
+        'yMgCC': 0.0007,
+        'yFeCC': 0.0005,
+        'yFeIa': 0.0007,
+        'r': 0.4,
+        'eta': 0.3,
+        'tauIa': 1.5,
+        'tDminIa': 0.15,
+        'SolarO': 0.0073,
+        'SolarMg': 0.0007,
+        'SolarFe': 0.0014,
+        'SFH_fn': "exponential",
+        'IaDTD_fn': "powerlaw",
+    }
 
-
-delta = aFeCC - aFeEq
-mu = 1.1
-yFeIa = yFeCC * (10.**(delta) - 1.) / mu
-
-
-class DefaultWAFParSet:
-    def __init__(
-        self,
-    ):
-       
-        self.aFeCC = 0.45
-        self.tauSFE = 1.0
-        self.tauSFH = 8.0
-        self.yOCC = yOCC
-        self.yMgCC = yMgCC
-        self.yFeCC = yFeCC
-        self.yFeIa = yFeIa
-        self.r = 0.4
-        self.eta = 0.3
-        self.tauIa = 1.5
-        self.tDminIa = 0.05
-        self.SolarO = SolarO
-        self.SolarMg = SolarMg
-        self.SolarFe = SolarFe
-        self.SFH_fn = 'exponential'
-        self.IaDTD_fn = 'powerlaw'
-        self.t_start = 0.5
-        self.t0 = 14.0
-        self.dt = 0.02
-
-
-class DefaultfanCEParSet:
-    def __init__(
-        self,
-    ):
-        self.aFeCC = 0.45
-        self.tauSFE = 1.0
-        self.tauSFH1 = 2.0
-        self.tauSFH2 = 8.0
-        self.fRetCC = 1.0
-        self.yOCC = yOCC
-        self.yMgCC = yMgCC
-        self.yFeCC = yFeCC
-        self.yFeIa = yFeIa
-        self.r = 0.4
-        self.eta = 0.3
-        self.tauIa = 1.5
-        self.tDminIa = 0.15
-        self.SolarO = SolarO
-        self.SolarMg = SolarMg
-        self.SolarFe = SolarFe
-        self.IaDTD_fn = 'powerlaw'
-        self.t_start = 0.5
-        self.t0 = 14.0
-        self.dt = 0.02
+    
+def DefaultfanCEParSet():
+    return {
+        "t_start": 0.5,
+        "t0": 14.0,
+        "dt": 0.02,
+        "tauSFE": 1.0,
+        "tauSFH1": 2.0,
+        "tauSFH2": 8.0,
+        "yOCC": 0.0071,
+        "yMgCC": 0.0007,
+        "yFeCC": 0.0005,
+        "yFeIa": 0.0007,
+        "aFeCC": 0.45,
+        "mu": 1.1,
+        "fRetCC": 1.0,
+        "r": 0.4,
+        "eta": 0.3,
+        "tauIa": 1.5,
+        "tDminIa": 0.05,
+        "SolarO": 0.0073,
+        "SolarMg": 0.0007,
+        "SolarFe": 0.0014,
+        "IaDTD_fn": "exponential",
+    }
