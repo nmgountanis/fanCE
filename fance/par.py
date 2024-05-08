@@ -5,17 +5,23 @@ SolarMg = 0.000671
 SolarFe = 0.00137
 
 aFeCC = 0.45
-aFeEq = 0.05
+aFeEq = 0.0
 yOCC = 0.973 * SolarO * (0.00137 / SolarFe) * (10**(aFeCC-0.45))
 yFeCC = yOCC * (SolarFe / SolarO) * (10**(-aFeCC))
 yMgCC = yOCC * SolarMg / SolarO
-yFeIa = yFeCC * (10.**(aFeCC - aFeEq) - 1.)
+
+
+delta = aFeCC - aFeEq
+mu = 1.1
+yFeIa = yFeCC * (10.**(delta) - 1.) / mu
 
 
 class DefaultWAFParSet:
     def __init__(
         self,
     ):
+       
+        self.aFeCC = 0.45
         self.tauSFE = 1.0
         self.tauSFH = 8.0
         self.yOCC = yOCC
@@ -40,6 +46,7 @@ class DefaultfanCEParSet:
     def __init__(
         self,
     ):
+        self.aFeCC = 0.45
         self.tauSFE = 1.0
         self.tauSFH1 = 2.0
         self.tauSFH2 = 8.0
