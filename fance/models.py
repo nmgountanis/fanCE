@@ -177,7 +177,6 @@ def waf2017(
 
 
 def fance(
-    tmod: np.ndarray,
     tauSFE: float = 1.0,
     tauSFH1: float = 2.0,
     tauSFH2: float = 8.0,
@@ -194,7 +193,11 @@ def fance(
     SolarMg: float = 0.0007,
     SolarFe: float = 0.0014,
     IaDTD_fn: str = "exponential",
+    t_start: float = 0.5,
+    t0: float = 14.0,
+    dt: float = 0.02,
 ):
+    
     """
     Compute [O/H], [Mg/H], [Fe/H], [O/Fe] and [Mg/Fe] tracks using WAF analytic model for a rise-fall SFR.
     Reference: Weinberg, Andrews, & Freudenburg 2017, ApJ 837, 183 (Particularly Appendix C)
@@ -228,6 +231,14 @@ def fance(
         SFR, OH, MgH, FeH, OFe, MgFe --- each a 1-d array corresponding to the time array, tmod
         (SFR is normalized such that for evenly spaced tmod, it is the fraction of stars formed in each time step.)
     """
+
+    # define intermediate time array for normalization reasons. 
+    # Cannot start at zero. Also must go to t0-t_start
+    tmod = np.arange(dt, t0 - t_start + dt, dt)
+    
+    # Define t used for plotting
+    t = tmod + t_start
+
     # Modulate Yields by Return Fraction
     yOCC *= fRetCC
     yMgCC *= fRetCC
@@ -352,5 +363,5 @@ def fance(
         MgFe = MgH - FeH
     # Normalize SFR
     SFR /= np.sum(SFR)
-    return SFR, OH, MgH, FeH, OFe, MgFe
+    return t, SFR, OH, MgH, FeH, OFe, MgFe
 
