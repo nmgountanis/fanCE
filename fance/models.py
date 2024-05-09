@@ -183,11 +183,12 @@ def fance(
     tauSFE: float = 1.0,
     tauSFH1: float = 2.0,
     tauSFH2: float = 8.0,
-    yOCC: float = 0.0071,
-    yMgCC: float = 0.0007,
-    yFeCC: float = 0.0005,
-    yFeIa: float = 0.0007,
+    yOCC: float = None,
+    yMgCC: float = None,
+    yFeCC: float = None,
+    yFeIa: float = None,
     aFeCC: float = 0.45,
+    aFeEq: float = 0.0,
     mu: float = 1.1,
     fRetCC: float = 1.0,
     r: float = 0.4,
@@ -195,8 +196,8 @@ def fance(
     tauIa: float = 1.5,
     tDminIa: float = 0.05,
     SolarO: float = 0.0073,
-    SolarMg: float = 0.0007,
-    SolarFe: float = 0.0014,
+    SolarMg: float = 6.71e-4,
+    SolarFe: float = 0.00137,
     IaDTD_fn: str = "exponential",
 ):
     
@@ -214,10 +215,10 @@ def fance(
     :param float tauSFH2: Along with tauSFH1, determines the SFR of the form
         SFR \propto (1-exp(-tmod/tau1))*exp(-tau2) [8.0]
         (If tauSFH1 <= 0 and tauSFH2 <= 0, then the model reverts to a constant SFH)
-    :param float yOCC: IMF-averaged CCSN O yield [0.0071]
-    :param float yMgCC: IMF-averaged CCSN Mg yield [0.0007]
-    :param float yFeCC: IMF-averaged CCSN iron yield [0.0005]
-    :param float yFeIa: IMF-averaged SNIa iron yield over 10 Gyr [0.0007]
+    :param float yOCC: IMF-averaged CCSN O yield [computed from aFeCC and mu if set to None]
+    :param float yMgCC: IMF-averaged CCSN Mg yield [computed from aFeCC and mu if set to None]
+    :param float yFeCC: IMF-averaged CCSN iron yield [computed from aFeCC and mu if set to None]
+    :param float yFeIa: IMF-averaged SNIa iron yield over 10 Gyr [computed from aFeCC and mu if set to None]
     :param float fRetCC: Fraction of metals returned to the ISM by CCSNe [1.0]
     :param float r: recycling fraction [0.4, based on Kroupa IMF]
     :param float eta: outflow mass loading factor [0.3]
@@ -244,13 +245,17 @@ def fance(
 
     # Set the Ia yield using CC plateu defined by user (aFeCC)
     # Followig eq. 17 (?) in Weinberg++23
-    aFeEq = 0.0 # late time evolution equilibrium [a/fe]
-    yOCC = 0.973 * SolarO * (0.00137 / SolarFe) * (10**(aFeCC-0.45))
-    yFeCC = yOCC * (SolarFe / SolarO) * (10**(-aFeCC))
-    yMgCC = yOCC * SolarMg / SolarO
+    if yOCC is None:
+        yOCC = 0.973 * SolarO * (0.00137 / SolarFe) * (10**(aFeCC-0.45))
+    if yFeCC is None:
+        yFeCC = yOCC * (SolarFe / SolarO) * (10**(-aFeCC))
+    if yMgCC is None:
+        yMgCC = yOCC * SolarMg / SolarO
+    
     delta = aFeCC - aFeEq
 
-    yFeIa = yFeCC * (10.**(delta) - 1.) / mu
+    if yFeIa is None:
+        yFeIa = yFeCC * (10.**(delta) - 1.) / mu
     
     
     # Modulate Yields by Return Fraction
