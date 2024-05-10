@@ -34,6 +34,8 @@ def plotSFH(
         sfr: np.ndarray,
         labels: str,
         linewidth: float = 3,
+        ax: mpl.axes.Axes = None,
+        **plotting_kwargs
 ):
     """
     Plots normalized star formation rate versus time
@@ -45,9 +47,10 @@ def plotSFH(
     :return: None
     """
     dt = t[1] - t[0]
-    fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(5, 5))
+    if ax is None:
+        fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(5, 5))
     plt.style.use("seaborn-v0_8-colorblind")
-    ax.plot(t, sfr / dt, color="C2", label=labels, linewidth=linewidth)
+    ax.plot(t, sfr / dt, label=labels, linewidth=linewidth, **plotting_kwargs)
     ax.set_xlabel("time [Gyr]")
     ax.set_ylabel("SFR")
     ax.set_xlim([-0.5, 14.5])
@@ -55,7 +58,8 @@ def plotSFH(
     ax.yaxis.set_ticks([0, 0.05, 0.1, 0.15])
     ax.legend(fontsize="18", loc="upper right")
     plt.tight_layout()
-    plt.show()
+
+    return ax
 
 def plotGas(
         t: np.ndarray,
@@ -64,6 +68,8 @@ def plotGas(
         MgFe: np.ndarray,
         labels: str,
         linewidth: float = 3,
+        ax: list = None,
+        **plotting_kwargs
 ):
     """
     Plots [Mg/H], [Fe/H], and [Mg/Fe] versus time in seperate subfigures.
@@ -78,27 +84,30 @@ def plotGas(
     :param float linewidth: Linewidth of plot
     :return: None
     """
-    fig, ax = plt.subplots(nrows=1, ncols=3, figsize=(18, 6))
+    if ax is None:
+        fig, ax = plt.subplots(nrows=1, ncols=3, figsize=(18, 6))
+
     plt.style.use("seaborn-v0_8-colorblind")
 
-    ax[0].plot(t, MgH, color="C2", linewidth=linewidth)
+    ax[0].plot(t, MgH, linewidth=linewidth,**plotting_kwargs)
     ax[0].set_xlabel("time [Gyr]")
     ax[0].set_ylabel("[Mg/H]")
     ax[0].set_xlim([-0.5, 14.5])
 
-    ax[1].plot(t, FeH, color="C2", linewidth=linewidth)
+    ax[1].plot(t, FeH, linewidth=linewidth,**plotting_kwargs)
     ax[1].set_xlabel("time [Gyr]")
     ax[1].set_ylabel("[Fe/H]")
     ax[1].set_xlim([-0.5, 14.5])
 
-    ax[2].plot(t, MgFe, color="C2", label=labels, linewidth=linewidth)
+    ax[2].plot(t, MgFe, label=labels, linewidth=linewidth, **plotting_kwargs)
     ax[2].set_ylabel("[Mg/Fe]")
     ax[2].set_xlabel("time [Gyr]")
     ax[2].set_xlim([-0.5, 14.5])
     ax[2].legend(fontsize="18", loc="upper right")
 
     plt.tight_layout()
-    plt.show()
+
+    return ax
 
 
 def plotStellar(
@@ -111,6 +120,8 @@ def plotStellar(
         MgFeStar: np.ndarray,
         labels: str,
         linewidth: float = 3,
+        ax: list = None,
+        **plotting_kwgs
 ):
     """
     Plots normalized SFH, <age>, [Mg/H], <[Mg/H]>, [Mg/Fe]
@@ -129,52 +140,56 @@ def plotStellar(
     :return: None
     """
     dt = t[1] - t[0]
-    fig, ax = plt.subplots(nrows=4, ncols=2, figsize=(11, 18))
+    if ax is None:
+        fig, ax = plt.subplots(nrows=4, ncols=2, figsize=(11, 18))
+    else:
+        fig = ax[0, 0].get_figure()
+
     plt.style.use("seaborn-v0_8-colorblind")
 
-    ax[0, 0].plot(t, sfr / dt, c="C2", linewidth=linewidth)
+    ax[0, 0].plot(t, sfr / dt, linewidth=linewidth,**plotting_kwgs)
     ax[0, 0].set_xlabel("time (Gyr)", labelpad=-2)
     ax[0, 0].set_ylabel("SFR")
     ax[0, 0].set_xlim([-0.5, 14.5])
 
-    ax[0, 1].plot(t, mean_age, c="C2", label=labels, linewidth=linewidth)
+    ax[0, 1].plot(t, mean_age, label=labels, linewidth=linewidth,**plotting_kwgs)
     ax[0, 1].set_xlabel("time (Gyr)", labelpad=-2)
     ax[0, 1].set_ylabel("$\langle$age$\\rangle$ (Gyr)")
     ax[0, 1].set_xlim([-0.5, 14.5])
     ax[0, 1].yaxis.set_ticks([5, 10, 15])
     ax[0, 1].legend(fontsize="16", loc="upper right")
 
-    ax[1, 0].plot(t, MgH, c="C2", linewidth=linewidth)
+    ax[1, 0].plot(t, MgH, linewidth=linewidth,**plotting_kwgs)
     ax[1, 0].set_xlabel("time (Gyr)", labelpad=-2)
     ax[1, 0].set_ylabel("[Mg/H]")
     ax[1, 0].set_xlim([-0.5, 14.5])
     ax[1, 0].set_ylim([-2.5, 0.75])
 
-    ax[1, 1].plot(t, MgHStar, c="C2", linewidth=linewidth)
+    ax[1, 1].plot(t, MgHStar, linewidth=linewidth,**plotting_kwgs)
     ax[1, 1].set_xlabel("time (Gyr)", labelpad=-2)
     ax[1, 1].set_ylabel("$\langle$[Mg/H]$\\rangle$")
     ax[1, 1].set_xlim([-0.5, 14.5])
     ax[1, 1].set_ylim([-2.5, 0.75])
 
-    ax[2, 0].plot(t, MgFe, c="C2", linewidth=linewidth)
+    ax[2, 0].plot(t, MgFe, linewidth=linewidth,**plotting_kwgs)
     ax[2, 0].set_xlabel("time (Gyr)", labelpad=-2)
     ax[2, 0].set_ylabel("[Mg/Fe]", labelpad=-15)
     ax[2, 0].set_xlim([-0.5, 14.5])
     ax[2, 0].set_ylim([-0.2, 0.575])
 
-    ax[2, 1].plot(t, MgFeStar, c="C2", linewidth=linewidth)
+    ax[2, 1].plot(t, MgFeStar, linewidth=linewidth,**plotting_kwgs)
     ax[2, 1].set_xlabel("time (Gyr)", labelpad=-2)
     ax[2, 1].set_ylabel("$\langle$[Mg/Fe]$\\rangle$", labelpad=-15)
     ax[2, 1].set_xlim([-0.5, 14.5])
     ax[2, 1].set_ylim([-0.2, 0.575])
 
-    ax[3, 0].plot(mean_age, MgHStar, c="C2", linewidth=linewidth)
+    ax[3, 0].plot(mean_age, MgHStar, linewidth=linewidth,**plotting_kwgs)
     ax[3, 0].set_xlabel("$\langle$age$\\rangle$ (Gyr)", labelpad=-1)
     ax[3, 0].set_ylabel("$\langle$[Mg/H]$\\rangle$")
     ax[3, 0].set_xlim([1, 14.5])
     ax[3, 0].set_ylim([-2.5, 0.75])
 
-    ax[3, 1].plot(mean_age, MgFeStar, c="C2", linewidth=linewidth)
+    ax[3, 1].plot(mean_age, MgFeStar, linewidth=linewidth,**plotting_kwgs)
     ax[3, 1].set_xlabel("$\langle$age$\\rangle$ (Gyr)", labelpad=-1)
     ax[3, 1].set_ylabel("$\langle$[Mg/Fe]$\\rangle$", labelpad=-15)
     ax[3, 1].set_xlim([1, 14.5])
@@ -183,4 +198,5 @@ def plotStellar(
     plt.tight_layout()
     fig.subplots_adjust(hspace=0.28)
     fig.subplots_adjust(wspace=0.3)
-    plt.show()
+
+    return ax
