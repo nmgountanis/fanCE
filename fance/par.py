@@ -19,9 +19,9 @@ def DefaultfanCEParSet():
         'r': 0.4,
         'eta': 0.3,
         'tauIa': 0,
-        'tDminIa': 0.05,
-        'SolarO': 0.00733,
+        'tDminIa': 0.15,
+        'SolarO': 7.33e-3,
         'SolarMg': 6.71e-4,
-        'SolarFe': 0.00137,
+        'SolarFe': 1.37e-3,
         'IaDTD_fn': "powerlaw",
     }
