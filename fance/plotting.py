@@ -85,7 +85,7 @@ def plotGas(
     :return: None
     """
     if ax is None:
-        fig, ax = plt.subplots(nrows=1, ncols=3, figsize=(18, 6))
+        fig, ax = plt.subplots(nrows=1, ncols=3, figsize=(15, 5))
 
     plt.style.use("seaborn-v0_8-colorblind")
 
