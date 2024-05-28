@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def weight_stellar_props(
+def stellar_props(
         t: np.ndarray,
         t0: float,
         sfr: np.ndarray,
