@@ -5,17 +5,17 @@ def waf2017(
     tmod: np.ndarray,
     tauSFE: float = 1.0,
     tauSFH: float = 8.0,
-    yOCC: float = 0.0071,
-    yMgCC: float = 0.0007,
-    yFeCC: float = 0.0005,
-    yFeIa: float = 0.0007,
+    yOCC: float = 7.13e-3,
+    yMgCC: float = 6.52e-4,
+    yFeCC: float = 4.73e-4,
+    yFeIa: float = 7.82e-4,
     r: float = 0.4,
     eta: float = 0.3,
     tauIa: float = 1.5,
     tDminIa: float = 0.15,
-    SolarO: float = 0.0073,
-    SolarMg: float = 0.0007,
-    SolarFe: float = 0.0014,
+    SolarO: float = 7.33e-3,	
+    SolarMg: float = 6.71e-4,
+    SolarFe: float = 1.37e-3,	
     SFH_fn: str = "exponential",
     IaDTD_fn: str = "powerlaw",
 ):
@@ -24,15 +24,18 @@ def waf2017(
     exponentially declining, or linear-exponential SFR.
     Reference: Weinberg, Andrews, & Freudenburg 2017, ApJ 837, 183 (Particularly Appendix C)
 
+    Default yield values from Weinberg, Griffiths, Johnson, & Thompson 2024
+    Default solar abundances from Magg et al. (2022) including 0.04 dex boost for gravitational settling
+
     :param np.ndarray tmod: Input time array (in Gyr) for model.
         Should be output time array - star formation start time.
     :param float tauSFE: SFE efficiency timescale [1.0]
     :param float tauSFH: e-folding timescale of SFH [8.0]
         (Ignored if SFH_fn == 'constant')
-    :param float yOCC: IMF-averaged CCSN O yield [0.0071]
-    :param float yMgCC: IMF-averaged CCSN Mg yield [0.0007]
-    :param float yFeCC: IMF-averaged CCSN iron yield [0.0005]
-    :param float yFeIa: IMF-averaged SNIa iron yield over 10 Gyr [0.0007]
+    :param float yOCC: IMF-averaged CCSN O yield [7.13e-3]
+    :param float yMgCC: IMF-averaged CCSN Mg yield [6.52e-4]
+    :param float yFeCC: IMF-averaged CCSN iron yield [4.73e-4]
+    :param float yFeIa: IMF-averaged SNIa iron yield over 10 Gyr [7.82e-4]
     :param float r: recycling fraction [0.4, based on Kroupa IMF]
     :param float eta: outflow mass loading factor [0.3]
     :param float tauIa: = e-folding time for SNIa DTD [1.5]
@@ -195,15 +198,16 @@ def fance(
     eta: float = 0.3,
     tauIa: float = 1.5,
     tDminIa: float = 0.05,
-    SolarO: float = 0.0073,
+    SolarO: float = 7.33e-3,
     SolarMg: float = 6.71e-4,
-    SolarFe: float = 0.00137,
+    SolarFe: float = 1.37e-3,
     IaDTD_fn: str = "exponential",
 ):
     
     """
     Compute [O/H], [Mg/H], [Fe/H], [O/Fe] and [Mg/Fe] tracks using WAF analytic model for a rise-fall SFR.
     Reference: Weinberg, Andrews, & Freudenburg 2017, ApJ 837, 183 (Particularly Appendix C)
+    Reference for yields: Weinberg, Griffith, Johnson, & Thompson 2024 
 
     :param float t_start: start of star-formation (Gyr) [0.5]
     :param float t0: end time (Gyr) [14.0]
@@ -226,9 +230,9 @@ def fance(
         (Ignored if IaDTD_fn == 'powerlaw')
     :param float tDminIa: minimum time delay for SNIa [0.15]
         (If IaDTD_fn == 'powerlaw', then tDminIa must be either 0.05 or 0.15)
-    :param float SolarO: Solar O mass fraction [0.0073]
-    :param float SolarMg: Solar Mg mass fraction [0.0007]
-    :param float SolarFe: Solar iron mass fraction [0.0014]
+    :param float SolarO: Solar O mass fraction [7.33e-3]
+    :param float SolarMg: Solar Mg mass fraction [6.71e-4]
+    :param float SolarFe: Solar iron mass fraction [1.37e-3]
     :param IaDTD_fn: functional form of the SN Ia DTD ['powerlaw']
         Must be either 'exponential' or 'powerlaw'
     :return Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
@@ -243,8 +247,7 @@ def fance(
     # Define t used for plotting
     t = tmod + t_start
 
-    # Set the Ia yield using CC plateu defined by user (aFeCC)
-    # Followig eq. 17 (?) in Weinberg++23
+    # Set the CCSN yield using CC plateu defined by user (aFeCC) and eq. 10 of Weinberg++24
     if yOCC is None:
         yOCC = 0.973 * SolarO * (0.00137 / SolarFe) * (10**(aFeCC-0.45))
     if yFeCC is None:
@@ -252,11 +255,10 @@ def fance(
     if yMgCC is None:
         yMgCC = yOCC * SolarMg / SolarO
     
+    # Set the SNIa Fe yield using eq. 21 of Weinberg++24
     delta = aFeCC - aFeEq
-
     if yFeIa is None:
         yFeIa = yFeCC * (10.**(delta) - 1.) / mu
-    
     
     # Modulate Yields by Return Fraction
     yOCC *= fRetCC
@@ -383,4 +385,3 @@ def fance(
     # Normalize SFR
     SFR /= np.sum(SFR)
     return t, SFR, OH, MgH, FeH, OFe, MgFe
-
