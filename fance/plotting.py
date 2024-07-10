@@ -49,7 +49,6 @@ def plotSFH(
     dt = t[1] - t[0]
     if ax is None:
         fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(5, 5))
-    plt.style.use("seaborn-v0_8-colorblind")
     ax.plot(t, sfr / dt, label=labels, linewidth=linewidth, **plotting_kwargs)
     ax.set_xlabel("time [Gyr]")
     ax.set_ylabel("SFR")
@@ -86,8 +85,6 @@ def plotGas(
     """
     if ax is None:
         fig, ax = plt.subplots(nrows=1, ncols=3, figsize=(15, 5))
-
-    plt.style.use("seaborn-v0_8-colorblind")
 
     ax[0].plot(t, MgH, linewidth=linewidth,**plotting_kwargs)
     ax[0].set_xlabel("time [Gyr]")
@@ -145,7 +142,6 @@ def plotStellar(
     else:
         fig = ax[0, 0].get_figure()
 
-    plt.style.use("seaborn-v0_8-colorblind")
 
     ax[0, 0].plot(t, sfr / dt, linewidth=linewidth,**plotting_kwgs)
     ax[0, 0].set_xlabel("time (Gyr)", labelpad=-2)
