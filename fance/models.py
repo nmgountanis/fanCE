@@ -13,9 +13,9 @@ def waf2017(
     eta: float = 0.3,
     tauIa: float = 1.5,
     tDminIa: float = 0.15,
-    SolarO: float = 7.33e-3,	
+    SolarO: float = 7.33e-3,
     SolarMg: float = 6.71e-4,
-    SolarFe: float = 1.37e-3,	
+    SolarFe: float = 1.37e-3,
     SFH_fn: str = "exponential",
     IaDTD_fn: str = "powerlaw",
 ):
@@ -203,11 +203,10 @@ def fance(
     SolarFe: float = 1.37e-3,
     IaDTD_fn: str = "exponential",
 ):
-    
     """
     Compute [O/H], [Mg/H], [Fe/H], [O/Fe] and [Mg/Fe] tracks using WAF analytic model for a rise-fall SFR.
     Reference: Weinberg, Andrews, & Freudenburg 2017, ApJ 837, 183 (Particularly Appendix C)
-    Reference for yields: Weinberg, Griffith, Johnson, & Thompson 2024 
+    Reference for yields: Weinberg, Griffith, Johnson, & Thompson 2024
 
     :param float t_start: start of star-formation (Gyr) [0.5]
     :param float t0: end time (Gyr) [14.0]
@@ -240,26 +239,26 @@ def fance(
         (SFR is normalized such that for evenly spaced tmod, it is the fraction of stars formed in each time step.)
     """
 
-    # define intermediate time array for normalization reasons. 
+    # define intermediate time array for normalization reasons.
     # Cannot start at zero. Also must go to t0-t_start
     tmod = np.arange(dt, t0 - t_start + dt, dt)
-    
+
     # Define t used for plotting
     t = tmod + t_start
 
     # Set the CCSN yield using CC plateu defined by user (aFeCC) and eq. 10 of Weinberg++24
     if yOCC is None:
-        yOCC = 0.973 * SolarO * (0.00137 / SolarFe) * (10**(aFeCC-0.45))
+        yOCC = 0.973 * SolarO * (0.00137 / SolarFe) * (10 ** (aFeCC - 0.45))
     if yFeCC is None:
-        yFeCC = yOCC * (SolarFe / SolarO) * (10**(-aFeCC))
+        yFeCC = yOCC * (SolarFe / SolarO) * (10 ** (-aFeCC))
     if yMgCC is None:
         yMgCC = yOCC * SolarMg / SolarO
-    
+
     # Set the SNIa Fe yield using eq. 21 of Weinberg++24
     delta = aFeCC - aFeEq
     if yFeIa is None:
-        yFeIa = yFeCC * (10.**(delta) - 1.) / mu
-    
+        yFeIa = yFeCC * (10.0 ** (delta) - 1.0) / mu
+
     # Modulate Yields by Return Fraction
     yOCC *= fRetCC
     yMgCC *= fRetCC
@@ -367,12 +366,12 @@ def fance(
         SFRh = -1 * np.exp(-tmod / tauh)
         SFR = SFR2 + SFRh
         # Convert to Linear Metallicity and Combine with WAF Eq. 117
-        ZO2 = SolarO * 10 ** OH2
-        ZMg2 = SolarMg * 10 ** MgH2
-        ZFe2 = SolarFe * 10 ** FeH2
-        ZOh = SolarO * 10 ** OHh
-        ZMgh = SolarMg * 10 ** MgHh
-        ZFeh = SolarFe * 10 ** FeHh
+        ZO2 = SolarO * 10**OH2
+        ZMg2 = SolarMg * 10**MgH2
+        ZFe2 = SolarFe * 10**FeH2
+        ZOh = SolarO * 10**OHh
+        ZMgh = SolarMg * 10**MgHh
+        ZFeh = SolarFe * 10**FeHh
         ZO = (SFR2 * ZO2 + SFRh * ZOh) / SFR
         ZMg = (SFR2 * ZMg2 + SFRh * ZMgh) / SFR
         ZFe = (SFR2 * ZFe2 + SFRh * ZFeh) / SFR
