@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 
 mpl.rcParams["font.family"] = "serif"
 mpl.rcParams["text.usetex"] = True
-mpl.rcParams["text.latex.preamble"] = r"\usepackage{amsmath}"
+#mpl.rcParams["text.latex.preamble"] = r"\usepackage{amsmath}"
 mpl.rcParams["errorbar.capsize"] = 5
 mpl.rcParams["axes.linewidth"] = 2
 mpl.rcParams["xtick.major.size"] = 16
@@ -150,7 +150,7 @@ def plotStellar(
 
     ax[0, 1].plot(t, mean_age, label=labels, linewidth=linewidth,**plotting_kwgs)
     ax[0, 1].set_xlabel("time (Gyr)", labelpad=-2)
-    ax[0, 1].set_ylabel("$\langle$age$\\rangle$ (Gyr)")
+    ax[0, 1].set_ylabel("⟨age⟩ (Gyr)")
     ax[0, 1].set_xlim([-0.5, 14.5])
     ax[0, 1].yaxis.set_ticks([5, 10, 15])
     ax[0, 1].legend(fontsize="16", loc="upper right")
@@ -163,7 +163,7 @@ def plotStellar(
 
     ax[1, 1].plot(t, MgHStar, linewidth=linewidth,**plotting_kwgs)
     ax[1, 1].set_xlabel("time (Gyr)", labelpad=-2)
-    ax[1, 1].set_ylabel("$\langle$[Mg/H]$\\rangle$")
+    ax[1, 1].set_ylabel("⟨[Mg/H]⟩")
     ax[1, 1].set_xlim([-0.5, 14.5])
     ax[1, 1].set_ylim([-2.5, 0.75])
 
@@ -175,19 +175,19 @@ def plotStellar(
 
     ax[2, 1].plot(t, MgFeStar, linewidth=linewidth,**plotting_kwgs)
     ax[2, 1].set_xlabel("time (Gyr)", labelpad=-2)
-    ax[2, 1].set_ylabel("$\langle$[Mg/Fe]$\\rangle$", labelpad=-15)
+    ax[2, 1].set_ylabel("⟨[Mg/Fe]⟩", labelpad=-15)
     ax[2, 1].set_xlim([-0.5, 14.5])
     ax[2, 1].set_ylim([-0.2, 0.575])
 
     ax[3, 0].plot(mean_age, MgHStar, linewidth=linewidth,**plotting_kwgs)
-    ax[3, 0].set_xlabel("$\langle$age$\\rangle$ (Gyr)", labelpad=-1)
-    ax[3, 0].set_ylabel("$\langle$[Mg/H]$\\rangle$")
+    ax[3, 0].set_xlabel("⟨age⟩ (Gyr)", labelpad=-1)
+    ax[3, 0].set_ylabel("⟨[Mg/H]⟩")
     ax[3, 0].set_xlim([1, 14.5])
     ax[3, 0].set_ylim([-2.5, 0.75])
 
     ax[3, 1].plot(mean_age, MgFeStar, linewidth=linewidth,**plotting_kwgs)
-    ax[3, 1].set_xlabel("$\langle$age$\\rangle$ (Gyr)", labelpad=-1)
-    ax[3, 1].set_ylabel("$\langle$[Mg/Fe]$\\rangle$", labelpad=-15)
+    ax[3, 1].set_xlabel("⟨age⟩ (Gyr)", labelpad=-1)
+    ax[3, 1].set_ylabel("⟨[Mg/Fe]⟩", labelpad=-15)
     ax[3, 1].set_xlim([1, 14.5])
     ax[3, 1].set_ylim([-0.2, 0.5])
 
