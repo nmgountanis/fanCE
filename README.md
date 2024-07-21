@@ -27,4 +27,4 @@ Copyright 2024 Nicole Gountanis and contributors.
 
 The source code is made available under the terms of the MIT license.
 
-If you make use of this code, please cite Gountanis et al. [2024](LINK) for the code and Weinberg et al. [2017](https://ui.adsabs.harvard.edu/abs/2017ApJ...837..183W/abstract) for the analytic solutions. The reference for the default CCSN and SNIa yield choices is Weinberg et al. [2024](https://ui.adsabs.harvard.edu/abs/2023arXiv230905719W/abstract).
+If you make use of this code, please cite Gountanis et al. [2024](https://arxiv.org/abs/2407.07971) for the code and Weinberg et al. [2017](https://ui.adsabs.harvard.edu/abs/2017ApJ...837..183W/abstract) for the analytic solutions. The reference for the default CCSN and SNIa yield choices is Weinberg et al. [2024](https://ui.adsabs.harvard.edu/abs/2023arXiv230905719W/abstract).
